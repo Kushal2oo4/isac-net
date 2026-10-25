@@ -1,10 +1,10 @@
 # ISAC-NET run status
 
-**Updated:** 2026-10-25 11:57 PM IST
+**Updated:** 2026-10-26 12:07 AM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 45960, elapsed 03:29:17)
+**State:** RUNNING (pid 45960, elapsed 03:39:20)
 
 **Current step:** `scripts/train_isacnet.py`
 
@@ -23,21 +23,21 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-[snr 0] step 140/300 train 2.5948 val 1.0855 (best 0.8037, Alg. 3 1.2844) (2598s)
-[snr 10] step 140/300 train 1.0843 val 0.3811 (best 0.3811, Alg. 3 1.2953) (2600s)
-[snr 5] step 140/300 train 1.7183 val 0.0732 (best 0.0608, Alg. 3 0.6157) (2602s)
-[snr 0] step 160/300 train 1.1634 val 1.2573 (best 0.8037, Alg. 3 1.2844) (2987s)
-[snr 20] step 160/300 train 0.6185 val 0.1524 (best 0.1524, Alg. 3 0.4002) (2988s)
-[snr 25] step 160/300 train 0.8517 val 0.2000 (best 0.0180, Alg. 3 0.2924) (2988s)
-[snr 15] step 160/300 train 0.5340 val 0.6212 (best 0.1720, Alg. 3 1.2249) (2989s)
-[snr 10] step 160/300 train 2.2608 val 0.6294 (best 0.3811, Alg. 3 1.2953) (2993s)
-[snr 5] step 160/300 train 0.9896 val 0.0817 (best 0.0608, Alg. 3 0.6157) (2993s)
-[snr 25] step 180/300 train 0.6929 val 0.1158 (best 0.0180, Alg. 3 0.2924) (3380s)
-[snr 0] step 180/300 train 0.8604 val 1.0954 (best 0.8037, Alg. 3 1.2844) (3380s)
-[snr 20] step 180/300 train 0.6351 val 0.1505 (best 0.1505, Alg. 3 0.4002) (3380s)
 [snr 15] step 180/300 train 1.2514 val 0.2580 (best 0.1720, Alg. 3 1.2249) (3381s)
 [snr 10] step 180/300 train 0.8055 val 0.3889 (best 0.3811, Alg. 3 1.2953) (3385s)
 [snr 5] step 180/300 train 1.7536 val 0.0860 (best 0.0608, Alg. 3 0.6157) (3384s)
+[snr 20] step 200/300 train 1.4625 val 0.1700 (best 0.1505, Alg. 3 0.4002) (3741s)
+[snr 0] step 200/300 train 1.1905 val 1.9582 (best 0.8037, Alg. 3 1.2844) (3741s)
+[snr 25] step 200/300 train 1.4162 val 0.1386 (best 0.0180, Alg. 3 0.2924) (3742s)
+[snr 15] step 200/300 train 2.5091 val 3.4637 (best 0.1720, Alg. 3 1.2249) (3743s)
+[snr 10] step 200/300 train 1.5913 val 0.5401 (best 0.3811, Alg. 3 1.2953) (3747s)
+[snr 5] step 200/300 train 1.8619 val 0.0785 (best 0.0608, Alg. 3 0.6157) (3747s)
+[snr 20] step 220/300 train 1.2602 val 0.8046 (best 0.1505, Alg. 3 0.4002) (4109s)
+[snr 0] step 220/300 train 381.4346 val 1.8605 (best 0.8037, Alg. 3 1.2844) (4109s)
+[snr 25] step 220/300 train 1.6895 val 0.1561 (best 0.0180, Alg. 3 0.2924) (4113s)
+[snr 15] step 220/300 train 0.6187 val 0.2801 (best 0.1720, Alg. 3 1.2249) (4113s)
+[snr 10] step 220/300 train 2.3200 val 0.5079 (best 0.3811, Alg. 3 1.2953) (4118s)
+[snr 5] step 220/300 train 2.7035 val 0.0629 (best 0.0608, Alg. 3 0.6157) (4118s)
 ```
 
 ## Result files
