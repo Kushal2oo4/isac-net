@@ -13,9 +13,10 @@ where w_l = sigmoid((peak_l [dB over noise floor] - eta3) / tau) is a soft
 version of the paper's hard threshold "M >= eta3", so eta3 can be learned.
 
 ISAC-NET learns Omega_k = (eta1..eta5) per layer; Alg. 3 is the same network
-with hand-set, fixed values. Peak search (argmax) and hard symbol decisions
-are not differentiable, so they run in NumPy on detached values; gradients
-reach every eta through the continuous parts above.
+with hand-set, fixed values. Everything runs in PyTorch on `device` (CPU,
+CUDA or Apple MPS). Peak search (argmax) and hard symbol decisions are not
+differentiable and run on detached values; gradients reach every eta through
+the continuous parts above.
 
 Interpretation notes (see README):
   * Each layer runs `n_inner` D-AMP updates (34)-(35) with that layer's eta1,
@@ -33,10 +34,8 @@ import numpy as np
 import torch
 
 from .config import C, SimConfig
-from .modulation import CONSTELLATION, hard_decision
-from .sensing import RangeDopplerSensor, division_matrix, reconstruct_channel
+from . import torch_ops as T
 
-CDT = torch.complex64
 # Alg. 3 defaults: plain D-AMP step, threshold 10 dB over floor, no memory in r, v, H.
 DEFAULT_ETA = (1.0, 0.0, 10.0, 0.0, 0.0)
 
@@ -56,52 +55,50 @@ def _pair(prev_r, prev_v, new_r, new_v):
 
 class ISACNet(torch.nn.Module):
     def __init__(self, cfg: SimConfig, n_layers=5, max_targets=3, step=0.5, tau_db=1.0,
-                 report="grid", eta_init=DEFAULT_ETA, n_inner=4):
+                 report="grid", eta_init=DEFAULT_ETA, n_inner=4, device="cpu"):
         super().__init__()
         self.cfg, self.K, self.max_targets, self.n_inner = cfg, n_layers, max_targets, n_inner
         self.step, self.tau_db, self.report = step, tau_db, report
-        self.eta = torch.nn.Parameter(torch.tensor([list(eta_init)] * n_layers, dtype=torch.float32))
-        self.full = RangeDopplerSensor(cfg, np.arange(cfg.M))
-        self.pilot = RangeDopplerSensor(cfg, cfg.pilot_idx)
-        m = torch.arange(cfg.M, dtype=torch.float32)
-        n = torch.arange(cfg.N, dtype=torch.float32)
-        self.register_buffer("m", m)
-        self.register_buffer("n", n)
+        self.device = torch.device(device)
+        self.eta = torch.nn.Parameter(torch.tensor([list(eta_init)] * n_layers, dtype=torch.float32,
+                                                   device=self.device))
+        self.full = T.TorchSensor(cfg, np.arange(cfg.M), self.device)
+        self.pilot = T.TorchSensor(cfg, cfg.pilot_idx, self.device)
+        self.m = torch.arange(cfg.M, dtype=torch.float32, device=self.device)
+        self.n = torch.arange(cfg.N, dtype=torch.float32, device=self.device)
+        self.all_rows = torch.arange(cfg.M, device=self.device)
+        self.pilot_rows = torch.as_tensor(cfg.pilot_idx, device=self.device)
 
     # ---- helpers -------------------------------------------------------
-    def phi(self, r, v):
-        """phi(m, n) for torch scalars r, v (differentiable), shape [M, N]."""
-        cfg = self.cfg
-        ph_r = -2 * np.pi * self.n * cfg.df / C * r
-        ph_v = 2 * np.pi * self.m * cfg.T * cfg.fc / C * v
-        return torch.exp(1j * (ph_v[:, None] + ph_r[None, :]))
-
     def build_channel(self, r, v, w, gains):
         H = 0
         for l in range(len(gains)):
-            H = H + (w[l] * gains[l])[:, None, None] * self.phi(r[l], v[l])[None]
+            H = H + (w[l] * gains[l])[:, None, None] * T.phase_grid(self.cfg, r[l], v[l], self.m, self.n)[None]
         return H
 
     def sense(self, sensor, S):
         res = sensor.clean(S, self.max_targets, threshold=0.0, report=self.report)
         return res.ranges, res.velocities, 10 * np.log10(np.maximum(res.peak_snr, 1e-12))
 
+    def _vec(self, a):
+        return torch.as_tensor(np.asarray(a), dtype=torch.float32, device=self.device)
+
     # ---- forward -------------------------------------------------------
     def forward(self, frame, return_history=False):
-        cfg = self.cfg
-        d = frame.data_mask
-        Y_np = frame.Y
-        Y = torch.from_numpy(Y_np).to(CDT)
+        cfg, dev = self.cfg, self.device
+        d = torch.as_tensor(frame.data_mask, device=dev)
+        Y = torch.as_tensor(frame.Y, dtype=T.CDT, device=dev)
+        X_known = torch.as_tensor(frame.X, dtype=T.CDT, device=dev)  # only pilot rows are used
         Yd = Y[:, d]
 
         # Pilot block (Fig. 4): rough sensing and channel from the pilots alone.
-        r_np, v_np, _ = self.sense(self.pilot, division_matrix(Y_np, frame.X, cfg.pilot_idx))
-        _, g = reconstruct_channel(cfg, r_np, v_np, Y_np, frame.X, cfg.pilot_idx)
-        r = torch.tensor(r_np, dtype=torch.float32)
-        v = torch.tensor(v_np, dtype=torch.float32)
-        H = self.build_channel(r, v, torch.ones(len(r_np)), torch.from_numpy(g).to(CDT))
+        pr = self.pilot_rows
+        r_np, v_np, _ = self.sense(self.pilot, Y[:, pr] / X_known[pr][None])
+        g = T.reconstruct_gains(cfg, r_np, v_np, Y, X_known, pr, self.m, self.n)
+        r, v = self._vec(r_np), self._vec(v_np)
+        H = self.build_channel(r, v, torch.ones(len(r_np), device=dev), g)
 
-        X = torch.zeros(Yd.shape[1:], dtype=CDT)
+        X = torch.zeros(Yd.shape[1:], dtype=T.CDT, device=dev)
         Z = torch.zeros_like(Yd)
         hist = []
         for k in range(self.K):
@@ -114,30 +111,29 @@ class ISACNet(torch.nn.Module):
                 X = X_new
 
             # Passive sensing on Y / X_hat with known pilots + detected data.
-            X_full = frame.X.copy()
-            X_full[d] = CONSTELLATION[hard_decision(X.detach().numpy())]
-            rn, vn, pk = self.sense(self.full, division_matrix(Y_np, X_full, np.arange(cfg.M)))
-            order = _pair(r.detach().numpy(), v.detach().numpy(), rn, vn)
+            X_full = X_known.clone()
+            X_full[d] = T.hard_decision(X.detach())
+            rn, vn, pk = self.sense(self.full, Y / X_full[None])
+            order = _pair(r.detach().cpu().numpy(), v.detach().cpu().numpy(), rn, vn)
             rn, vn, pk = rn[order], vn[order], pk[order]
             L_old = len(r)
-            r_new = torch.tensor(rn, dtype=torch.float32)
-            v_new = torch.tensor(vn, dtype=torch.float32)
+            r_new, v_new = self._vec(rn), self._vec(vn)
             if L_old:
                 Lb = min(L_old, len(rn))
                 r = torch.cat([e4 * r[:Lb] + (1 - e4) * r_new[:Lb], r_new[Lb:]])
                 v = torch.cat([e4 * v[:Lb] + (1 - e4) * v_new[:Lb], v_new[Lb:]])
             else:
                 r, v = r_new, v_new
-            w = torch.sigmoid((torch.tensor(pk, dtype=torch.float32) - e3) / self.tau_db)
+            w = torch.sigmoid((self._vec(pk) - e3) / self.tau_db)
 
             # Channel reconstruction (gains by LS on all symbols, detached).
-            _, g = reconstruct_channel(cfg, r.detach().numpy(), v.detach().numpy(),
-                                       Y_np, X_full, np.arange(cfg.M))
-            H_new = self.build_channel(r, v, w, torch.from_numpy(g).to(CDT))
+            g = T.reconstruct_gains(cfg, r.detach().cpu().numpy(), v.detach().cpu().numpy(),
+                                    Y, X_full, self.all_rows, self.m, self.n)
+            H_new = self.build_channel(r, v, w, g)
             H = e5 * H + (1 - e5) * H_new
             if return_history:
-                hist.append(dict(x=X.detach().numpy().copy(), r=r.detach().numpy().copy(),
-                                 v=v.detach().numpy().copy(), w=w.detach().numpy().copy()))
+                hist.append(dict(x=X.detach().cpu().numpy().copy(), r=r.detach().cpu().numpy().copy(),
+                                 v=v.detach().cpu().numpy().copy(), w=w.detach().cpu().numpy().copy()))
         out = dict(x=X, r=r, v=v, w=w)
         if return_history:
             out["history"] = hist
@@ -146,7 +142,7 @@ class ISACNet(torch.nn.Module):
 
 def isac_loss(out, frame, cfg, lam=1.0):
     """MSE of the data symbols + lam * (range NMSE + velocity NMSE), eq. (43)."""
-    x_true = torch.from_numpy(frame.X[frame.data_mask]).to(CDT)
+    x_true = torch.as_tensor(frame.X[frame.data_mask], dtype=T.CDT, device=out["x"].device)
     comm = ((out["x"] - x_true).abs() ** 2).mean()
     r_true = np.asarray(cfg.ranges, float)
     v_true = np.asarray(cfg.velocities, float)
@@ -155,7 +151,7 @@ def isac_loss(out, frame, cfg, lam=1.0):
     if len(r) == 0:
         return comm + lam * 2.0, comm
     # pair estimates with true targets (missing ones cost NMSE 1)
-    rn, vn = r.detach().numpy(), v.detach().numpy()
+    rn, vn = r.detach().cpu().numpy(), v.detach().cpu().numpy()
     best, best_cost = None, np.inf
     for perm in permutations(range(len(rn)), min(L, len(rn))):
         cost = sum(((rn[p] - r_true[i]) / r_true[i]) ** 2 + ((vn[p] - v_true[i]) / v_true[i]) ** 2

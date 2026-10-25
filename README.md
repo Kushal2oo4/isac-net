@@ -24,7 +24,8 @@ isacnet/
   sensing.py     2D-DFT sensing, cyclic peak extraction, channel reconstruction (Alg. 2)
   baselines.py   all Fig. 9 / Fig. 10 baselines on one frame
   metrics.py     BER, SER, NMSE (eq. 43) with target matching
-  isac_net.py    Alg. 3 / ISAC-NET (PyTorch), loss
+  isac_net.py    Alg. 3 / ISAC-NET (PyTorch, runs on CPU / CUDA / MPS), loss
+  torch_ops.py   PyTorch versions of sensing, channel rebuild and 16-QAM decisions
 scripts/sweep_baselines.py   Monte Carlo sweep of the baselines -> results/*.json + *.png
 scripts/train_isacnet.py     learn eta per SNR -> results/eta_*.json
 scripts/eval_isacnet.py      Alg. 3 vs ISAC-NET, final and per layer -> results/isacnet_*.json
@@ -39,6 +40,10 @@ python scripts/sweep_baselines.py --grid small --trials 50              # minute
 python scripts/sweep_baselines.py --grid full  --trials 500 --out results/baselines_full   # paper size
 python scripts/train_isacnet.py   --grid full  --steps 30 --out results/eta_full.json
 python scripts/eval_isacnet.py    --grid full  --eta results/eta_full.json --trials 40 --out results/isacnet_full
+# on a GPU: one process, everything on the device
+python scripts/train_isacnet.py   --grid full --device cuda --workers 1 --steps 300 --out results/eta_full_gpu.json
+python scripts/eval_isacnet.py    --grid full --device cuda --workers 1 --eta results/eta_full_gpu.json --trials 200
+# Apple silicon: --device mps (or --device cpu --workers 8 to use the cores)
 python scripts/plot_figures.py    --baselines results/baselines_full_physical.json --isacnet results/isacnet_full.json
 ```
 

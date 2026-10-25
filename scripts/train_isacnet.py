@@ -18,6 +18,7 @@ import torch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from isacnet import SimConfig, small_config  # noqa: E402
+from isacnet.torch_ops import pick_device  # noqa: E402
 from isacnet.isac_net import ISACNet, isac_loss  # noqa: E402
 from isacnet.simulator import make_frame  # noqa: E402
 
@@ -34,7 +35,8 @@ def train_one(job):
     cfg = make_cfg(args)
     torch.manual_seed(args.seed)
     rng = np.random.default_rng([args.seed, 7, int(snr * 10) + 1000])
-    net = ISACNet(cfg, n_layers=args.layers, report=args.report)
+    net = ISACNet(cfg, n_layers=args.layers, report=args.report, n_inner=args.inner,
+                  device=pick_device(args.device))
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
     log = []
     t0 = time.time()
@@ -63,6 +65,8 @@ def main():
     p.add_argument("--path-loss", choices=["physical", "equal"], default="physical")
     p.add_argument("--snr", type=float, nargs="+", default=[0, 5, 10, 15, 20])
     p.add_argument("--layers", type=int, default=5)
+    p.add_argument("--inner", type=int, default=4, help="D-AMP updates per layer (1 = literal Alg. 3)")
+    p.add_argument("--device", default="cpu", help="cpu, cuda, mps or auto; use --workers 1 on a GPU")
     p.add_argument("--steps", type=int, default=60)
     p.add_argument("--batch", type=int, default=2)
     p.add_argument("--lr", type=float, default=0.02)
@@ -74,8 +78,12 @@ def main():
     p.add_argument("--out", default="results/eta.json")
     args = p.parse_args()
 
-    with Pool(args.workers) as pool:
-        res = pool.map(train_one, [(args, s) for s in args.snr])
+    jobs = [(args, s) for s in args.snr]
+    if args.workers > 1:
+        with Pool(args.workers) as pool:
+            res = pool.map(train_one, jobs)
+    else:  # GPUs: train the SNRs one after another in this process
+        res = [train_one(j) for j in jobs]
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     with open(args.out, "w") as f:
         json.dump({"args": vars(args),

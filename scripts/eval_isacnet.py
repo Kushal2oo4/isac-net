@@ -15,6 +15,7 @@ import torch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from isacnet import SimConfig, small_config  # noqa: E402
+from isacnet.torch_ops import pick_device  # noqa: E402
 from isacnet.isac_net import ISACNet  # noqa: E402
 from isacnet.metrics import ber_ser, nmse  # noqa: E402
 from isacnet.modulation import hard_decision  # noqa: E402
@@ -38,11 +39,13 @@ def one_trial(job):
     cfg = make_cfg(args)
     rng = np.random.default_rng([args.seed + 99, int(snr * 10) + 1000, trial])
     frame = make_frame(cfg, snr, rng)
-    nets = {"alg3": ISACNet(cfg, n_layers=args.layers, report=args.report)}
+    nets = {"alg3": ISACNet(cfg, n_layers=args.layers, report=args.report, n_inner=args.inner,
+                  device=pick_device(args.device))}
     if eta_table:
-        net = ISACNet(cfg, n_layers=args.layers, report=args.report)
+        net = ISACNet(cfg, n_layers=args.layers, report=args.report, n_inner=args.inner,
+                  device=pick_device(args.device))
         with torch.no_grad():
-            net.eta.copy_(torch.tensor(nearest_eta(eta_table, snr)))
+            net.eta.copy_(torch.tensor(nearest_eta(eta_table, snr), device=net.eta.device))
         nets["isacnet"] = net
     res = {}
     with torch.no_grad():
@@ -64,6 +67,8 @@ def main():
     p.add_argument("--path-loss", choices=["physical", "equal"], default="physical")
     p.add_argument("--snr", type=float, nargs="+", default=[-10, -5, 0, 5, 10, 15, 20, 25, 30])
     p.add_argument("--layers", type=int, default=5)
+    p.add_argument("--inner", type=int, default=4, help="D-AMP updates per layer (1 = literal Alg. 3)")
+    p.add_argument("--device", default="cpu", help="cpu, cuda, mps or auto; use --workers 1 on a GPU")
     p.add_argument("--report", choices=["grid", "fine"], default="grid")
     p.add_argument("--eta", default=None, help="JSON written by train_isacnet.py")
     p.add_argument("--trials", type=int, default=40)
@@ -75,12 +80,15 @@ def main():
     eta_table = json.load(open(args.eta))["eta"] if args.eta else None
     jobs = [(args, s, t, eta_table) for s in args.snr for t in range(args.trials)]
     acc = {}
-    with Pool(args.workers) as pool:
-        for i, (snr, res) in enumerate(pool.imap_unordered(one_trial, jobs)):
-            for name, layers in res.items():
-                acc.setdefault(name, {}).setdefault(snr, []).append(layers)
-            if (i + 1) % max(1, len(jobs) // 20) == 0:
-                print(f"{i + 1}/{len(jobs)}", flush=True)
+    pool = Pool(args.workers) if args.workers > 1 else None  # GPUs: run in-process
+    it = pool.imap_unordered(one_trial, jobs) if pool else map(one_trial, jobs)
+    for i, (snr, res) in enumerate(it):
+        for name, layers in res.items():
+            acc.setdefault(name, {}).setdefault(snr, []).append(layers)
+        if (i + 1) % max(1, len(jobs) // 20) == 0:
+            print(f"{i + 1}/{len(jobs)}", flush=True)
+    if pool:
+        pool.close()
 
     # [trial, layer, (ber, ser, nmse_r, nmse_v)]
     summary = {}

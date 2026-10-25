@@ -30,3 +30,19 @@ def test_gradients_reach_hyperparameters():
     loss.backward()
     g = net.eta.grad.abs().sum(0)
     assert torch.all(g[[0, 1, 2, 4]] > 0)
+
+
+def test_torch_sensor_matches_numpy():
+    from isacnet.sensing import RangeDopplerSensor, division_matrix
+    from isacnet.torch_ops import TorchSensor
+
+    cfg = small_config(path_loss="equal")
+    fr = make_frame(cfg, 15.0, np.random.default_rng(6))
+    rows = np.arange(cfg.M)
+    S = division_matrix(fr.Y, fr.X, rows)
+    ref = RangeDopplerSensor(cfg, rows).clean(S, 3, threshold=0.0)
+    got = TorchSensor(cfg, rows, torch.device("cpu")).clean(torch.as_tensor(S, dtype=torch.complex64), 3)
+    order = np.argsort(ref.ranges)
+    gorder = np.argsort(got.ranges)
+    assert np.allclose(ref.ranges[order], got.ranges[gorder], atol=1e-3)
+    assert np.allclose(ref.velocities[order], got.velocities[gorder], atol=1e-3)
