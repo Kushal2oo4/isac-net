@@ -7,8 +7,8 @@ Passive Sensing and Communication* (Jiang et al., IEEE TCOM 2024).
 
 | Step | Content | State |
 |---|---|---|
-| 1 | Simulator and baselines (this code) | done |
-| 2 | Alg. 3 and ISAC-NET (deep unfolding, learnable η1..η5) | next |
+| 1 | Simulator and baselines | done |
+| 2 | Alg. 3 and ISAC-NET (deep unfolding, learnable η1..η5) | done (first training run) |
 | 3 | Fig. 9 (BER/SER), Fig. 10 (range/velocity NMSE), Fig. 8 if time | |
 | 4 | Report and list of research gaps | |
 
@@ -24,15 +24,22 @@ isacnet/
   sensing.py     2D-DFT sensing, cyclic peak extraction, channel reconstruction (Alg. 2)
   baselines.py   all Fig. 9 / Fig. 10 baselines on one frame
   metrics.py     BER, SER, NMSE (eq. 43) with target matching
-scripts/sweep_baselines.py   Monte Carlo sweep -> results/*.json + *.png
+  isac_net.py    Alg. 3 / ISAC-NET (PyTorch), loss
+scripts/sweep_baselines.py   Monte Carlo sweep of the baselines -> results/*.json + *.png
+scripts/train_isacnet.py     learn eta per SNR -> results/eta_*.json
+scripts/eval_isacnet.py      Alg. 3 vs ISAC-NET, final and per layer -> results/isacnet_*.json
+scripts/plot_figures.py      paper-style Figs. 8, 9, 10
 tests/                       pytest sanity checks
 ```
 
 ```
-pip install numpy matplotlib pytest
+pip install numpy matplotlib pytest torch
 python -m pytest -q
 python scripts/sweep_baselines.py --grid small --trials 50              # minutes on a laptop
 python scripts/sweep_baselines.py --grid full  --trials 500 --out results/baselines_full   # paper size
+python scripts/train_isacnet.py   --grid full  --steps 30 --out results/eta_full.json
+python scripts/eval_isacnet.py    --grid full  --eta results/eta_full.json --trials 40 --out results/isacnet_full
+python scripts/plot_figures.py    --baselines results/baselines_full_physical.json --isacnet results/isacnet_full.json
 ```
 
 ## Baselines
@@ -76,3 +83,15 @@ These are deliberate choices; each is a candidate discussion point in the report
 8. **Search window.** Sensing only searches r ≤ 200 m and |v| ≤ 50 m/s
    (`cfg.max_range`, `cfg.max_speed`).
 9. **SNR** is the received-signal SNR: each frame's channel is normalised so that E|Hx|² = 1.
+10. **Alg. 3 / ISAC-NET layer.** Each layer runs 4 D-AMP updates with that layer's η1, η2.
+   With a single update per layer, starting from X = Z = 0, the detector is still far from
+   converged after 5 layers (BER about 4e-2 at 20 dB), which contradicts Fig. 8.
+11. **η4, η5.** Eqs. (40) and (42) read "η·old + new". We use convex combinations
+    (η·old + (1 − η)·new), so r, v and H stay unbiased for any η.
+12. **η3** is a hard threshold in the paper. It is replaced by a sigmoid gate on the peak
+    height in dB, so it can be trained (`tau_db` sets how soft the gate is). Argmax peak search and
+    hard symbol decisions run outside autograd; gradients reach the η's through the
+    continuous steps (D-AMP updates, blending, channel rebuild).
+13. **Training.** We use Adam with lr 0.02 for 30 steps of 2 fresh frames per SNR, not the paper's
+    500 epochs × batch 128 at lr 0.001. With only 25 parameters the η's settle quickly,
+    but a longer run on the lab GPU is the obvious next step.
