@@ -1,17 +1,18 @@
 # ISAC-NET run status
 
-**Updated:** 2026-10-25 10:26 PM IST
+**Updated:** 2026-10-25 10:36 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 45960, elapsed 01:58:50)
+**State:** RUNNING (pid 45960, elapsed 02:08:53)
 
-**Current step:** `scripts/train_isacnet.py`
+**Current step:** `scripts/eval_isacnet.py`
 
 ## Stages started
 ```
 == baselines (NumPy, on 12 CPU cores) ==
 == train ISAC-NET (inner4) ==
+== evaluate (inner4) ==
 ```
 
 ## Errors
@@ -21,25 +22,26 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-[snr 20] step 240/300 train 1.8101 val 0.0276 (best 0.0149, Alg. 3 0.0149) (5291s)
-[snr 0] step 240/300 train 0.6635 val 0.6183 (best 0.4812, Alg. 3 0.4812) (5291s)
-[snr 5] step 240/300 train 0.4808 val 0.0556 (best 0.0552, Alg. 3 0.0570) (5293s)
-[snr 0] step 260/300 train 1.1998 val 0.7669 (best 0.4812, Alg. 3 0.4812) (5739s)
-[snr 15] step 260/300 train 4.0258 val 2.0093 (best 0.0194, Alg. 3 0.0195) (5739s)
-[snr 20] step 260/300 train 2.3051 val 0.0244 (best 0.0149, Alg. 3 0.0149) (5740s)
-[snr 25] step 260/300 train 4.9901 val 5.7618 (best 0.0138, Alg. 3 0.0138) (5740s)
-[snr 10] step 260/300 train 1.7315 val 0.8221 (best 0.3076, Alg. 3 0.3091) (5740s)
-[snr 5] step 260/300 train 0.5484 val 0.0551 (best 0.0551, Alg. 3 0.0570) (5741s)
-[snr 0] step 280/300 train 0.7650 val 0.7083 (best 0.4812, Alg. 3 0.4812) (6191s)
-[snr 10] step 280/300 train 1.3704 val 2.1822 (best 0.3076, Alg. 3 0.3091) (6191s)
-[snr 15] step 280/300 train 2.5222 val 2.0105 (best 0.0194, Alg. 3 0.0195) (6191s)
-[snr 20] step 280/300 train 7.1561 val 0.0238 (best 0.0149, Alg. 3 0.0149) (6191s)
-[snr 25] step 280/300 train 6.3429 val 6.2543 (best 0.0138, Alg. 3 0.0138) (6191s)
-[snr 5] step 280/300 train 0.5310 val 0.0551 (best 0.0551, Alg. 3 0.0570) (6191s)
+[snr 20] step 300/300 train 3.7223 val 0.0236 (best 0.0149, Alg. 3 0.0149) (6630s)
+[snr 10] step 300/300 train 2.6694 val 1.0254 (best 0.3076, Alg. 3 0.3091) (6630s)
+[snr 5] step 300/300 train 0.5023 val 0.0554 (best 0.0551, Alg. 3 0.0570) (6630s)
+SNR 0: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 5: [[0.967, -0.085, 10.085, 0.173, 0.115], [0.82, 0.023, 9.902, 0.06, 0.0], [1.116, -0.172, 10.174, 0.056, 0.325], [1.157, -0.414, 9.693, 0.034, 0.0], [0.973, -0.041, 10.0, 0.383, 0.0]]
+SNR 10: [[1.117, 0.117, 10.02, 0.0, 0.0], [0.916, 0.254, 9.886, 0.0, 0.055], [1.001, 0.078, 10.086, 0.0, 0.046], [1.006, 0.01, 9.815, 0.013, 0.004], [0.996, -0.052, 10.0, 0.059, 0.0]]
+SNR 15: [[1.03, 0.029, 10.003, 0.0, 0.0], [0.989, 0.152, 9.991, 0.0, 0.0], [0.992, 0.141, 10.038, 0.0, 0.0], [0.996, 0.053, 9.888, 0.0, 0.0], [0.996, -0.091, 10.0, 0.0, 0.0]]
+SNR 20: [[1.023, 0.023, 10.0, 0.037, 0.0], [0.99, 0.124, 9.999, 0.41, 0.408], [0.994, 0.101, 10.006, 0.0, 0.0], [0.994, 0.003, 9.969, 0.0, 0.0], [0.997, -0.109, 10.0, 0.0, 0.0]]
+SNR 25: [[1.126, 0.125, 9.987, 0.0, 0.0], [1.038, 0.099, 9.942, 0.073, 0.073], [0.954, 0.069, 10.058, 0.0, 0.0], [0.92, -0.016, 9.936, 0.0, 0.056], [0.992, -0.151, 10.0, 0.056, 0.0]]
+== evaluate (inner4) ==
+70/1400
+140/1400
+210/1400
+280/1400
+350/1400
 ```
 
 ## Result files
 ```
+Oct 25 22:29 results/eta_gpu_inner4.json
 Oct 25 20:38 results/baselines_full_gpu.png
 Oct 25 20:38 results/baselines_full_gpu.json
 ```
