@@ -1,10 +1,10 @@
 # ISAC-NET run status
 
-**Updated:** 2026-10-25 15:08 UTC
+**Updated:** 2026-10-25 20:45 IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 45960, elapsed 11:03)
+**State:** RUNNING (pid 45960, elapsed 17:58)
 
 **Current step:** `scripts/train_isacnet.py`
 
