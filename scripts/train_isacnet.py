@@ -29,16 +29,37 @@ def make_cfg(args):
     return cfg
 
 
+# Box that keeps the learned D-AMP / blending weights in a stable range.
+ETA_LO = [0.0, -1.0, 0.0, 0.0, 0.0]
+ETA_HI = [1.5, 1.0, 30.0, 1.0, 1.0]
+
+
+@torch.no_grad()
+def validate(net, frames, cfg, lam):
+    return float(np.mean([isac_loss(net(f), f, cfg, lam=lam)[0].item() for f in frames]))
+
+
 def train_one(job):
+    """Adam on eta with gradient clipping, a cosine learning-rate schedule and
+    an eta box; keeps the eta with the lowest loss on a fixed validation set,
+    starting from the hand-set Alg. 3 values, so training can never end up
+    worse than Alg. 3 on that set."""
     args, snr = job
     torch.set_num_threads(max(1, args.threads))
     cfg = make_cfg(args)
     torch.manual_seed(args.seed)
     rng = np.random.default_rng([args.seed, 7, int(snr * 10) + 1000])
-    net = ISACNet(cfg, n_layers=args.layers, report=args.report, n_inner=args.inner,
-                  device=pick_device(args.device))
+    val_rng = np.random.default_rng([args.seed, 8, int(snr * 10) + 1000])
+    val = [make_frame(cfg, snr, val_rng) for _ in range(args.val_frames)]
+    dev = pick_device(args.device)
+    net = ISACNet(cfg, n_layers=args.layers, report=args.report, n_inner=args.inner, device=dev)
+    lo = torch.tensor(ETA_LO, device=dev)
+    hi = torch.tensor(ETA_HI, device=dev)
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
-    log = []
+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max(1, args.steps))
+    best_val = validate(net, val, cfg, args.lam)
+    best_eta = net.eta.detach().cpu().numpy().tolist()
+    log, vlog = [], [(0, best_val)]
     t0 = time.time()
     for it in range(args.steps):
         opt.zero_grad()
@@ -49,14 +70,20 @@ def train_one(job):
             (loss / args.batch).backward()
             tot += loss.item() / args.batch
             com += comm.item() / args.batch
+        torch.nn.utils.clip_grad_norm_(net.parameters(), args.clip)
         opt.step()
-        with torch.no_grad():  # keep the blending weights in [0, 1]
-            net.eta[:, 3:].clamp_(0.0, 1.0)
+        sched.step()
+        with torch.no_grad():
+            net.eta.copy_(torch.maximum(torch.minimum(net.eta, hi), lo))
         log.append((tot, com))
-        if (it + 1) % max(1, args.steps // 10) == 0:
-            print(f"[snr {snr:g}] step {it + 1}/{args.steps} loss {np.mean([l[0] for l in log[-5:]]):.4f} "
-                  f"comm-mse {np.mean([l[1] for l in log[-5:]]):.4f} ({time.time() - t0:.0f}s)", flush=True)
-    return snr, net.eta.detach().numpy().tolist(), log
+        if (it + 1) % args.val_every == 0 or it + 1 == args.steps:
+            v = validate(net, val, cfg, args.lam)
+            vlog.append((it + 1, v))
+            if v < best_val:
+                best_val, best_eta = v, net.eta.detach().cpu().numpy().tolist()
+            print(f"[snr {snr:g}] step {it + 1}/{args.steps} train {np.mean([l[0] for l in log[-args.val_every:]]):.4f} "
+                  f"val {v:.4f} (best {best_val:.4f}, Alg. 3 {vlog[0][1]:.4f}) ({time.time() - t0:.0f}s)", flush=True)
+    return snr, best_eta, dict(train=log, val=vlog, last_eta=net.eta.detach().cpu().numpy().tolist())
 
 
 def main():
@@ -69,7 +96,10 @@ def main():
     p.add_argument("--device", default="cpu", help="cpu, cuda, mps or auto; use --workers 1 on a GPU")
     p.add_argument("--steps", type=int, default=60)
     p.add_argument("--batch", type=int, default=2)
-    p.add_argument("--lr", type=float, default=0.02)
+    p.add_argument("--lr", type=float, default=0.01)
+    p.add_argument("--clip", type=float, default=1.0, help="gradient-norm clip")
+    p.add_argument("--val-frames", type=int, default=4, help="fixed validation frames per SNR")
+    p.add_argument("--val-every", type=int, default=10, help="validate every N steps")
     p.add_argument("--lam", type=float, default=1.0, help="weight of the sensing NMSE in the loss")
     p.add_argument("--report", choices=["grid", "fine"], default="grid")
     p.add_argument("--workers", type=int, default=min(os.cpu_count(), 5))
