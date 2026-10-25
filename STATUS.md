@@ -1,36 +1,30 @@
 # ISAC-NET run status
 
-Updated **2026-10-25 14:49 UTC** by the cloud machine, every 10 minutes.
-If this time stops moving, the cloud machine has stopped.
+**Updated:** 2026-10-25 14:58 UTC
 
-**Cloud runs: finished or stopped.**
+_If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-## Plan (cloud, 4 CPU cores)
-1. ISAC-NET on the converging Alg. 3 (4 D-AMP updates per layer): train 150 steps per SNR (0–25 dB), then evaluate 100 trials per SNR.
-2. The same for the literal Alg. 3 (1 update per layer).
+**State:** RUNNING (pid 45960, elapsed 00:59)
 
-## Stage log
-### Stages
+**Current step:** `scripts/sweep_baselines.py`
+
+## Stages started
 ```
-== train inner4 Sun Oct 25 14:36:33 UTC 2026
+== baselines (NumPy, on 12 CPU cores) ==
 ```
 
-## Live output
-Training prints a line every 15 steps per SNR: `train` = training loss, `val` = loss on fixed held-out frames, `Alg. 3` = held-out loss of the hand-set values (lower is better).
+## Errors
+```
+(none)
+```
 
-### 1 · train (converging Alg. 3)
-_not started yet_
+## Last log lines
+```
+== baselines (NumPy, on 12 CPU cores) ==
+70/1400
+```
 
-### 1 · evaluate (converging Alg. 3)
-_not started yet_
-
-### 2 · train (literal Alg. 3)
-_not started yet_
-
-### 2 · evaluate (literal Alg. 3)
-_not started yet_
-
-## Figures
-_appear here when each evaluation finishes_
-
-The Mac run writes to `~/isac-net/run_gpu.log` on your Mac: `tail -f ~/isac-net/run_gpu.log`.
+## Result files
+```
+(none yet)
+```
