@@ -40,10 +40,9 @@ python scripts/sweep_baselines.py --grid small --trials 50              # minute
 python scripts/sweep_baselines.py --grid full  --trials 500 --out results/baselines_full   # paper size
 python scripts/train_isacnet.py   --grid full  --steps 30 --out results/eta_full.json
 python scripts/eval_isacnet.py    --grid full  --eta results/eta_full.json --trials 40 --out results/isacnet_full
-# on a GPU: one process, everything on the device
-python scripts/train_isacnet.py   --grid full --device cuda --workers 1 --steps 300 --out results/eta_full_gpu.json
-python scripts/eval_isacnet.py    --grid full --device cuda --workers 1 --eta results/eta_full_gpu.json --trials 200
-# Apple silicon: --device mps (or --device cpu --workers 8 to use the cores)
+# on the lab GPU: everything (baselines, both trainings, evaluation, figures)
+bash scripts/run_gpu.sh                      # DEVICE=mps on Apple silicon
+STEPS=50 TRIALS=20 bash scripts/run_gpu.sh   # quick check first
 python scripts/plot_figures.py    --baselines results/baselines_full_physical.json --isacnet results/isacnet_full.json
 ```
 
@@ -100,3 +99,8 @@ These are deliberate choices; each is a candidate discussion point in the report
 13. **Training.** We use Adam with lr 0.02 for 30 steps of 2 fresh frames per SNR, not the paper's
     500 epochs × batch 128 at lr 0.001. With only 25 parameters the η's settle quickly,
     but a longer run on the lab GPU is the obvious next step.
+14. **Stable training.** `train_isacnet.py` clips gradients (`--clip`), uses a cosine learning-rate
+    schedule, keeps η inside a box (η1 ∈ [0, 1.5], η2 ∈ [−1, 1], η3 ∈ [0, 30] dB, η4, η5 ∈ [0, 1]),
+    and keeps the η with the lowest loss on fixed validation frames, starting from the
+    hand-set Alg. 3 values. Our first literal-Alg. 3 run without these safeguards diverged
+    at 20–25 dB.
