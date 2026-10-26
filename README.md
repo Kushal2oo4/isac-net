@@ -1,10 +1,10 @@
 # ISAC-NET run status (joint-snr: literal, one eta for all SNRs)
 
-**Updated:** 2026-10-26 05:35 PM IST
+**Updated:** 2026-10-26 05:45 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 2334, elapsed 02:41:22)
+**State:** RUNNING (pid 2334, elapsed 02:51:26)
 
 **Current step:** `scripts/train_isacnet.py`
 
@@ -32,6 +32,7 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 [snr joint] step 180/300 train 0.4499 val 0.3286 (best 0.3286, Alg. 3 1.1598) (7288s)
 [snr joint] step 200/300 train 0.3817 val 0.4150 (best 0.3286, Alg. 3 1.1598) (7975s)
 [snr joint] step 220/300 train 0.4355 val 0.4451 (best 0.3286, Alg. 3 1.1598) (8629s)
+[snr joint] step 240/300 train 0.4202 val 0.3210 (best 0.3210, Alg. 3 1.1598) (9046s)
 ```
 
 ## Result files
