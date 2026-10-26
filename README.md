@@ -85,6 +85,17 @@ BER, hand-set Alg. 3 → trained ISAC-NET (mean over 200 frames):
   and the 15 dB run kept the η from step 40. A single η trained over all SNRs, or a loss that
   penalises failed frames, is the next thing to try:
   `train_isacnet.py --joint` learns one η over all `--snr` values, and `scripts/run_joint.sh` runs it end to end.
+- **One η for all SNRs** (`scripts/run_joint.sh`, 300 steps × 8 frames, 48 validation frames; results in
+  `results/*_joint_literal*`) removes the 15–20 dB failures. BER, literal Alg. 3 → joint ISAC-NET (per-SNR ISAC-NET):
+
+  | SNR (dB) | 0 | 5 | 10 | 15 | 20 | 25 |
+  |---|---|---|---|---|---|---|
+  | Alg. 3 | 1.1e-1 | 6.4e-2 | 3.1e-2 | 1.4e-2 | 6.1e-3 | 5.2e-3 |
+  | joint | 8.3e-2 | 1.4e-2 | 1.6e-3 | 2.4e-3 | 8.0e-4 | 4.6e-4 |
+  | per-SNR | 1.1e-1 | 6.5e-2 | 3.8e-2 | 4.8e-2 | 4.6e-2 | 4.7e-4 |
+
+  Range and velocity NMSE drop 3–6× at 10–25 dB (e.g. velocity 1.2 → 0.30 at 10 dB). Velocity NMSE is a little
+  worse at −5 and 0 dB. The converging Alg. 3 (4 updates per layer) is still better: BER 1.6e-4 at 10 dB.
 - Literal Alg. 3 oscillates from layer to layer (BER at layer 2 is lower than at layer 3 at every
   SNR, see Fig. 8), consistent with note 3.
 
