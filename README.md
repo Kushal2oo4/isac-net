@@ -99,6 +99,9 @@ BER, hand-set Alg. 3 → trained ISAC-NET (mean over 200 frames):
 - Literal Alg. 3 oscillates from layer to layer (BER at layer 2 is lower than at layer 3 at every
   SNR, see Fig. 8), consistent with note 3.
 
+**Final figures:** `results/final_fig{8,9,10}.png` put the baselines, the CRB, literal Alg. 3, both ISAC-NET
+trainings and the 4-update Alg. 3 on one set of axes (`scripts/plot_final.py`; the command is in its docstring).
+
 ## Where we had to interpret the paper
 
 These are deliberate choices; each is a candidate discussion point in the report.
