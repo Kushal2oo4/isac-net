@@ -83,7 +83,8 @@ BER, hand-set Alg. 3 → trained ISAC-NET (mean over 200 frames):
   the mean. Using the η trained at 25 dB instead removes every failure: 15 dB 1.3e-2 → 4.4e-4,
   20 dB 6.3e-3 → 2.7e-6. Per-SNR training on 16 validation frames does not see the rare failures,
   and the 15 dB run kept the η from step 40. A single η trained over all SNRs, or a loss that
-  penalises failed frames, is the next thing to try.
+  penalises failed frames, is the next thing to try:
+  `train_isacnet.py --joint` learns one η over all `--snr` values, and `scripts/run_joint.sh` runs it end to end.
 - Literal Alg. 3 oscillates from layer to layer (BER at layer 2 is lower than at layer 3 at every
   SNR, see Fig. 8), consistent with note 3.
 
