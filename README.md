@@ -8,8 +8,8 @@ Passive Sensing and Communication* (Jiang et al., IEEE TCOM 2024).
 | Step | Content | State |
 |---|---|---|
 | 1 | Simulator and baselines | done |
-| 2 | Alg. 3 and ISAC-NET (deep unfolding, learnable η1..η5) | done (first training run) |
-| 3 | Fig. 9 (BER/SER), Fig. 10 (range/velocity NMSE), Fig. 8 if time | |
+| 2 | Alg. 3 and ISAC-NET (deep unfolding, learnable η1..η5) | done (full training run, see Results) |
+| 3 | Fig. 9 (BER/SER), Fig. 10 (range/velocity NMSE), Fig. 8 if time | first full set: `results/fig_gpu_*` |
 | 4 | Report and list of research gaps | |
 
 ## Layout
@@ -59,6 +59,34 @@ python scripts/plot_figures.py    --baselines results/baselines_full_physical.js
 | `sense_pilot` | cyclic extraction on pilot symbols only | rough estimate, Fig. 4 |
 | `sense_perfect` | cyclic extraction with the true X | "Perfect" line, Fig. 10 |
 
+## Results of the full run
+
+`scripts/run_gpu.sh` on an M2 Pro (CPU, 12 cores, about 4.5 h): 300 training steps of 4 frames per SNR, 200 test
+frames per SNR, full Table III grid. Files: `results/*_gpu_*`, log in `results/run_gpu.log`.
+
+BER, hand-set Alg. 3 → trained ISAC-NET (mean over 200 frames):
+
+| SNR (dB) | 4 updates/layer | 1 update/layer (literal) |
+|---|---|---|
+| 5 | 1.1e-2 → 2.7e-2 | 6.4e-2 → 6.5e-2 |
+| 10 | 1.6e-4 → 2.8e-4 | 3.1e-2 → 3.8e-2 |
+| 15 | 3.5e-5 → 3.5e-5 | 1.4e-2 → 4.8e-2 |
+| 20 | 0 → 0 | 6.1e-3 → 4.6e-2 |
+| 25 | 0 → 0 | 5.2e-3 → 4.7e-4 |
+
+- **4 updates per layer:** Alg. 3 already sits near perfect-CSI BER, and learning finds nothing better
+  (the best validated η stays at, or next to, the hand-set values).
+- **Literal Alg. 3:** learning lowers the validation loss 1.6–16× at every SNR and the velocity NMSE a lot at
+  10–20 dB (e.g. 1.2 → 0.41 at 10 dB), and cuts BER 11× at 25 dB. At 15–20 dB the mean BER gets *worse*.
+- **Why (`scripts/eta_transfer.py`, 24 frames):** at 15 and 20 dB the median BER with the trained η is
+  ~1e-5 and 0, better than Alg. 3, but 2–6 frames out of 24 fail completely (BER ≈ 0.5) and dominate
+  the mean. Using the η trained at 25 dB instead removes every failure: 15 dB 1.3e-2 → 4.4e-4,
+  20 dB 6.3e-3 → 2.7e-6. Per-SNR training on 16 validation frames does not see the rare failures,
+  and the 15 dB run kept the η from step 40. A single η trained over all SNRs, or a loss that
+  penalises failed frames, is the next thing to try.
+- Literal Alg. 3 oscillates from layer to layer (BER at layer 2 is lower than at layer 3 at every
+  SNR, see Fig. 8), consistent with note 3.
+
 ## Where we had to interpret the paper
 
 These are deliberate choices; each is a candidate discussion point in the report.
@@ -96,9 +124,8 @@ These are deliberate choices; each is a candidate discussion point in the report
     height in dB, so it can be trained (`tau_db` sets how soft the gate is). Argmax peak search and
     hard symbol decisions run outside autograd; gradients reach the η's through the
     continuous steps (D-AMP updates, blending, channel rebuild).
-13. **Training.** We use Adam with lr 0.02 for 30 steps of 2 fresh frames per SNR, not the paper's
-    500 epochs × batch 128 at lr 0.001. With only 25 parameters the η's settle quickly,
-    but a longer run on the lab GPU is the obvious next step.
+13. **Training.** We use Adam (lr 0.01, cosine schedule) for 300 steps of 4 fresh frames per SNR, not the
+    paper's 500 epochs × batch 128 at lr 0.001. With only 25 parameters the η's settle quickly.
 14. **Stable training.** `train_isacnet.py` clips gradients (`--clip`), uses a cosine learning-rate
     schedule, keeps η inside a box (η1 ∈ [0, 1.5], η2 ∈ [−1, 1], η3 ∈ [0, 30] dB, η4, η5 ∈ [0, 1]),
     and keeps the η with the lowest loss on fixed validation frames, starting from the
