@@ -1,16 +1,17 @@
 # ISAC-NET run status (joint-snr: literal, one eta for all SNRs)
 
-**Updated:** 2026-10-26 05:55 PM IST
+**Updated:** 2026-10-26 06:05 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 2334, elapsed 03:01:29)
+**State:** RUNNING (pid 2334, elapsed 03:11:32)
 
-**Current step:** `scripts/train_isacnet.py`
+**Current step:** `scripts/eval_isacnet.py`
 
 ## Stages started
 ```
 == train ISAC-NET (literal, one eta for all SNRs) ==
+== evaluate ==
 ```
 
 ## Errors
@@ -20,24 +21,24 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-== train ISAC-NET (literal, one eta for all SNRs) ==
-[snr joint] step 20/300 train 0.5084 val 0.5552 (best 0.5552, Alg. 3 1.1598) (566s)
-[snr joint] step 40/300 train 0.3112 val 0.4104 (best 0.4104, Alg. 3 1.1598) (1263s)
-[snr joint] step 60/300 train 0.4211 val 0.3503 (best 0.3503, Alg. 3 1.1598) (2035s)
-[snr joint] step 80/300 train 0.4278 val 0.3899 (best 0.3503, Alg. 3 1.1598) (2777s)
-[snr joint] step 100/300 train 0.3159 val 0.3466 (best 0.3466, Alg. 3 1.1598) (3530s)
-[snr joint] step 120/300 train 0.4072 val 0.4173 (best 0.3466, Alg. 3 1.1598) (4980s)
-[snr joint] step 140/300 train 0.4141 val 0.4223 (best 0.3466, Alg. 3 1.1598) (5778s)
-[snr joint] step 160/300 train 0.4160 val 0.4529 (best 0.3466, Alg. 3 1.1598) (6531s)
-[snr joint] step 180/300 train 0.4499 val 0.3286 (best 0.3286, Alg. 3 1.1598) (7288s)
 [snr joint] step 200/300 train 0.3817 val 0.4150 (best 0.3286, Alg. 3 1.1598) (7975s)
 [snr joint] step 220/300 train 0.4355 val 0.4451 (best 0.3286, Alg. 3 1.1598) (8629s)
 [snr joint] step 240/300 train 0.4202 val 0.3210 (best 0.3210, Alg. 3 1.1598) (9046s)
 [snr joint] step 260/300 train 0.3335 val 0.3281 (best 0.3210, Alg. 3 1.1598) (9469s)
 [snr joint] step 280/300 train 0.3953 val 0.4215 (best 0.3210, Alg. 3 1.1598) (9886s)
+[snr joint] step 300/300 train 0.4574 val 0.4213 (best 0.3210, Alg. 3 1.1598) (10302s)
+SNR 0: [[1.0, 0.0, 9.848, 0.0, 0.0], [1.0, -0.14, 9.874, 0.001, 0.103], [0.912, -0.087, 9.98, 0.0, 0.0], [0.895, -0.006, 10.217, 0.01, 0.468], [0.867, 0.0, 10.0, 0.078, 0.0]]
+SNR 5: [[1.0, 0.0, 9.848, 0.0, 0.0], [1.0, -0.14, 9.874, 0.001, 0.103], [0.912, -0.087, 9.98, 0.0, 0.0], [0.895, -0.006, 10.217, 0.01, 0.468], [0.867, 0.0, 10.0, 0.078, 0.0]]
+SNR 10: [[1.0, 0.0, 9.848, 0.0, 0.0], [1.0, -0.14, 9.874, 0.001, 0.103], [0.912, -0.087, 9.98, 0.0, 0.0], [0.895, -0.006, 10.217, 0.01, 0.468], [0.867, 0.0, 10.0, 0.078, 0.0]]
+SNR 15: [[1.0, 0.0, 9.848, 0.0, 0.0], [1.0, -0.14, 9.874, 0.001, 0.103], [0.912, -0.087, 9.98, 0.0, 0.0], [0.895, -0.006, 10.217, 0.01, 0.468], [0.867, 0.0, 10.0, 0.078, 0.0]]
+SNR 20: [[1.0, 0.0, 9.848, 0.0, 0.0], [1.0, -0.14, 9.874, 0.001, 0.103], [0.912, -0.087, 9.98, 0.0, 0.0], [0.895, -0.006, 10.217, 0.01, 0.468], [0.867, 0.0, 10.0, 0.078, 0.0]]
+SNR 25: [[1.0, 0.0, 9.848, 0.0, 0.0], [1.0, -0.14, 9.874, 0.001, 0.103], [0.912, -0.087, 9.98, 0.0, 0.0], [0.895, -0.006, 10.217, 0.01, 0.468], [0.867, 0.0, 10.0, 0.078, 0.0]]
+== evaluate ==
+70/1400
+140/1400
 ```
 
 ## Result files
 ```
-(none yet)
+Oct 26 18:02 results/eta_joint_literal.json
 ```
