@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup: combined SNR, -20..40 dB, 10 layers)
 
-**Updated:** 2026-10-28 09:47 PM IST
+**Updated:** 2026-10-28 09:57 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 32587, elapsed 05:32:35)
+**State:** RUNNING (pid 32587, elapsed 05:42:40)
 
 **Current step:** `scripts/eval_isacnet.py`
 
@@ -24,8 +24,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-alg3     SNR  40.0 BER 0.00e+00 SER 0.00e+00 NMSE r 9.5e-03 (med 8.1e-08) v 3.1e-02 (med 1.2e-02)
-wrote results/paper_fig{8,9,10}.png
 == evaluate with the search window ==
 110/2200
 220/2200
@@ -39,6 +37,8 @@ wrote results/paper_fig{8,9,10}.png
 1100/2200
 1210/2200
 1320/2200
+1430/2200
+1540/2200
 ```
 
 ## Result files
