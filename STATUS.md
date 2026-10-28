@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup: combined SNR, -20..40 dB, 10 layers)
 
-**Updated:** 2026-10-28 07:56 PM IST
+**Updated:** 2026-10-28 08:06 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 32587, elapsed 03:41:50)
+**State:** RUNNING (pid 32587, elapsed 03:51:54)
 
 **Current step:** `scripts/eval_isacnet.py`
 
@@ -22,8 +22,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-220/2200
-330/2200
 440/2200
 550/2200
 660/2200
@@ -37,6 +35,8 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 1540/2200
 1650/2200
 1760/2200
+1870/2200
+1980/2200
 ```
 
 ## Result files
