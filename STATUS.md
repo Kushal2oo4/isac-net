@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup: combined SNR, -20..40 dB, 10 layers)
 
-**Updated:** 2026-10-28 05:25 PM IST
+**Updated:** 2026-10-28 05:35 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 32587, elapsed 01:10:30)
+**State:** RUNNING (pid 32587, elapsed 01:20:32)
 
 **Current step:** `scripts/train_isacnet.py`
 
@@ -21,7 +21,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-SNR -20.0 | perfect_csi=4.82e-01 map_ls=5.00e-01 damp_ls=5.00e-01 map_recon=4.84e-01 | dft2d=(1.0e+03,1.0e+00) dft2d_clean=(1.0e+03,1.0e+00) sense_pilot=(2.1e+02,9.1e+01) sense_perfect=(2.4e+02,1.4e+04)
 SNR -10.0 | perfect_csi=4.41e-01 map_ls=4.95e-01 damp_ls=4.95e-01 map_recon=4.42e-01 | dft2d=(1.8e+02,1.0e+00) dft2d_clean=(2.2e+02,1.0e+00) sense_pilot=(1.6e+02,8.0e+01) sense_perfect=(1.5e+02,1.1e+04)
 SNR  -5.0 | perfect_csi=3.87e-01 map_ls=4.85e-01 damp_ls=4.85e-01 map_recon=3.88e-01 | dft2d=(8.2e+00,1.7e+00) dft2d_clean=(1.7e+02,9.9e-01) sense_pilot=(1.3e+02,5.6e+01) sense_perfect=(1.3e+02,8.1e+03)
 SNR   0.0 | perfect_csi=2.88e-01 map_ls=4.56e-01 damp_ls=4.56e-01 map_recon=2.88e-01 | dft2d=(4.6e-01,2.7e+00) dft2d_clean=(1.5e+02,9.5e-01) sense_pilot=(1.1e+02,5.6e+01) sense_perfect=(8.2e+01,6.3e+03)
@@ -36,6 +35,7 @@ SNR  40.0 | perfect_csi=0.00e+00 map_ls=2.23e-01 damp_ls=2.23e-01 map_recon=3.09
 [snr joint] step 20/200 train 0.6647 val 2.2488 (best 0.6664, Alg. 3 0.6664) (776s)
 [snr joint] step 40/200 train 1.5817 val 1.8075 (best 0.6664, Alg. 3 0.6664) (1585s)
 [snr joint] step 60/200 train 2.1599 val 1.3816 (best 0.6664, Alg. 3 0.6664) (2394s)
+[snr joint] step 80/200 train 1.8750 val 2.7398 (best 0.6664, Alg. 3 0.6664) (3201s)
 ```
 
 ## Result files
