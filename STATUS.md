@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup: combined SNR, -20..40 dB, 10 layers)
 
-**Updated:** 2026-10-28 06:35 PM IST
+**Updated:** 2026-10-28 06:45 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 32587, elapsed 02:20:49)
+**State:** RUNNING (pid 32587, elapsed 02:30:51)
 
 **Current step:** `scripts/train_isacnet.py`
 
