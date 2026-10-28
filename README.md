@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup: combined SNR, -20..40 dB, 10 layers)
 
-**Updated:** 2026-10-28 10:27 PM IST
+**Updated:** 2026-10-28 10:37 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 32587, elapsed 06:12:51)
+**State:** RUNNING (pid 32587, elapsed 06:22:56)
 
 **Current step:** `scripts/eval_isacnet.py`
 
@@ -24,11 +24,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-isacnet  SNR -20.0 BER 4.99e-01 SER 9.37e-01 NMSE r 1.1e+01 (med 5.0e+00) v 1.3e+01 (med 9.4e+00)
-isacnet  SNR -10.0 BER 4.73e-01 SER 9.13e-01 NMSE r 6.8e-01 (med 2.8e-01) v 3.8e+00 (med 3.1e+00)
-isacnet  SNR  -5.0 BER 3.93e-01 SER 8.67e-01 NMSE r 3.4e-01 (med 1.3e-01) v 2.2e+00 (med 1.0e+00)
-isacnet  SNR   0.0 BER 2.87e-01 SER 7.61e-01 NMSE r 2.0e-01 (med 3.1e-02) v 1.3e+00 (med 3.5e-01)
-isacnet  SNR   5.0 BER 1.72e-01 SER 5.61e-01 NMSE r 7.9e-02 (med 8.9e-06) v 7.9e-01 (med 3.3e-02)
 isacnet  SNR  10.0 BER 6.58e-02 SER 2.46e-01 NMSE r 6.6e-02 (med 8.1e-08) v 6.0e-01 (med 1.6e-02)
 isacnet  SNR  15.0 BER 7.77e-03 SER 3.05e-02 NMSE r 6.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
 isacnet  SNR  20.0 BER 1.64e-04 SER 6.49e-04 NMSE r 2.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
@@ -39,6 +34,11 @@ isacnet  SNR  40.0 BER 1.03e-08 SER 4.12e-08 NMSE r 9.5e-03 (med 8.1e-08) v 3.1e
 220/2200
 330/2200
 440/2200
+550/2200
+660/2200
+770/2200
+880/2200
+990/2200
 ```
 
 ## Result files
