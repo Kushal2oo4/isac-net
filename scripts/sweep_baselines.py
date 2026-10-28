@@ -11,7 +11,7 @@ from multiprocessing import Pool
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from isacnet import C, SimConfig, small_config  # noqa: E402
+from isacnet import C, SimConfig, add_cfg_args, apply_cfg_args, small_config  # noqa: E402
 from isacnet.baselines import run_baselines  # noqa: E402
 from isacnet.metrics import ber_ser, nmse  # noqa: E402
 from isacnet.simulator import make_frame  # noqa: E402
@@ -23,7 +23,7 @@ SENSE = ["dft2d", "dft2d_clean", "sense_pilot", "sense_perfect"]
 def make_cfg(args):
     cfg = SimConfig() if args.grid == "full" else small_config()
     cfg.path_loss = args.path_loss
-    return cfg
+    return apply_cfg_args(cfg, args)
 
 
 def one_trial(job):
@@ -78,6 +78,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--grid", choices=["small", "full"], default="small")
     p.add_argument("--path-loss", choices=["physical", "equal"], default="physical")
+    add_cfg_args(p)
     p.add_argument("--snr", type=float, nargs="+", default=[-10, -5, 0, 5, 10, 15, 20, 25, 30])
     p.add_argument("--trials", type=int, default=50)
     p.add_argument("--workers", type=int, default=os.cpu_count())
