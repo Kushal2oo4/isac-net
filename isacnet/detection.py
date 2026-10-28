@@ -9,6 +9,8 @@ def ls_channel_estimate(cfg: SimConfig, Y, X):
     """LS estimate on pilot symbols, linearly interpolated over time. [Nr, M, N]."""
     p = np.asarray(cfg.pilot_idx)
     Hp = Y[:, p] / X[p][None]                       # [Nr, P, N]
+    if cfg.ls_interp == "first":                    # one estimate for the whole frame
+        return np.repeat(Hp[:, :1], cfg.M, axis=1)
     m = np.arange(cfg.M)
     j = np.clip(np.searchsorted(p, m, side="right") - 1, 0, len(p) - 1)
     j2 = np.clip(j + 1, 0, len(p) - 1)

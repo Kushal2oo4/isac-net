@@ -8,6 +8,8 @@
         --out results/final_fig
 
 Each --run is "label=file.json:key", key being "alg3" or "isacnet" in an eval_isacnet.py file.
+An optional "@k" suffix picks the k-th line style (0-3, 2 = the highlighted blue); by default runs
+take the styles in order.
 """
 import argparse
 import json
@@ -39,10 +41,11 @@ def by_float(d):  # JSON keys may be "10" or "10.0"
     return {k: {float(s): v for s, v in sub.items()} for k, sub in d.items()}
 
 
-def load_run(spec):
+def load_run(spec, default_style):
     label, rest = spec.split("=", 1)
     path, key = rest.rsplit(":", 1)
-    return label, by_float(json.load(open(path))["results"])[key]
+    key, _, style = key.partition("@")
+    return label, by_float(json.load(open(path))["results"])[key], int(style) if style else default_style
 
 
 def main():
@@ -57,11 +60,11 @@ def main():
     raw = json.load(open(a.baselines))
     base = by_float(raw["results"])
     base_nmse = base if a.stat == "mean" else by_float(raw["median_nmse"])
-    runs = [load_run(s) for s in a.run]
+    runs = [load_run(s, i) for i, s in enumerate(a.run)]
     snrs = sorted(base["map_ls"])
 
     def draw_runs(ax, value):
-        for i, (label, d) in enumerate(runs):
+        for label, d, i in runs:
             s = sorted(d)
             ax.semilogy(s, nz([value(d[x]) for x in s]), RUN_STYLE[i % 4], color=RUN_COLOR[i % 4],
                         lw=2.5 if RUN_COLOR[i % 4] == "C0" else 1.8, ms=6, label=label)
@@ -101,7 +104,7 @@ def main():
     # Fig. 8: BER and NMSE versus layer
     fig, ax = plt.subplots(1, 2, figsize=(11, 5.4))
     for s, ls in zip(a.layer_snr, ["-", "--"]):
-        for i, (label, d) in enumerate(runs):
+        for label, d, i in runs:
             if s not in d:
                 continue
             m = np.array(d[s]["mean"])

@@ -102,6 +102,10 @@ BER, hand-set Alg. 3 → trained ISAC-NET (mean over 200 frames):
 **Final figures:** `results/final_fig{8,9,10}.png` put the baselines, the CRB, literal Alg. 3, both ISAC-NET
 trainings and the 4-update Alg. 3 on one set of axes (`scripts/plot_final.py`; the command is in its docstring).
 
+**Closer to the paper's setup:** `scripts/run_paper_setup.sh` reruns with the SNR measured after combining
+the Nr antennas (`--snr-def combined`), SNR from −20 to 40 dB, no search window (`--no-window`), the
+conventional LS channel held from the first pilot (`--ls first`) and 10 layers. Defaults of all scripts are unchanged.
+
 ## Where we had to interpret the paper
 
 These are deliberate choices; each is a candidate discussion point in the report.

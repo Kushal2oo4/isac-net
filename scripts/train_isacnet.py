@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from isacnet import SimConfig, small_config  # noqa: E402
+from isacnet import SimConfig, add_cfg_args, apply_cfg_args, small_config  # noqa: E402
 from isacnet.torch_ops import pick_device  # noqa: E402
 from isacnet.isac_net import ISACNet, isac_loss  # noqa: E402
 from isacnet.simulator import make_frame  # noqa: E402
@@ -26,7 +26,7 @@ from isacnet.simulator import make_frame  # noqa: E402
 def make_cfg(args):
     cfg = SimConfig() if args.grid == "full" else small_config()
     cfg.path_loss = args.path_loss
-    return cfg
+    return apply_cfg_args(cfg, args)
 
 
 # Box that keeps the learned D-AMP / blending weights in a stable range.
@@ -100,6 +100,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--grid", choices=["small", "full"], default="small")
     p.add_argument("--path-loss", choices=["physical", "equal"], default="physical")
+    add_cfg_args(p)
     p.add_argument("--snr", type=float, nargs="+", default=[0, 5, 10, 15, 20])
     p.add_argument("--layers", type=int, default=5)
     p.add_argument("--inner", type=int, default=4, help="D-AMP updates per layer (1 = literal Alg. 3)")

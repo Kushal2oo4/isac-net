@@ -62,3 +62,13 @@ def test_baselines_three_targets_high_snr(cfg):
     nr, nv = nmse(out["dft2d_clean"]["r"], out["dft2d_clean"]["v"], cfg.ranges, cfg.velocities)
     assert nr < 1e-2 and nv < 5e-2
     assert ber_ser(out["perfect_csi"]["idx"], fr.idx, fr.data_mask)[0] < 1e-3
+
+
+def test_paper_setup_options():
+    cfg = small_config(path_loss="equal")
+    a = make_frame(cfg, 10.0, np.random.default_rng(3))
+    cfg.snr_def, cfg.ls_interp = "combined", "first"
+    b = make_frame(cfg, 10.0, np.random.default_rng(3))
+    assert np.isclose(b.noise_var, cfg.Nr * a.noise_var)
+    H = ls_channel_estimate(cfg, b.Y, b.X)
+    assert np.allclose(H[:, -1], H[:, 0])

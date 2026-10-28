@@ -40,6 +40,8 @@ def make_frame(cfg: SimConfig, snr_db: float, rng, channel: Channel = None) -> F
                       channel.aod, channel.aoa)
 
     noise_var = 10.0 ** (-snr_db / 10.0)
+    if cfg.snr_def == "combined":  # SNR after combining the Nr antennas: Nr times more noise per antenna
+        noise_var *= cfg.Nr
     Z = np.sqrt(noise_var / 2) * (rng.standard_normal(H.shape) + 1j * rng.standard_normal(H.shape))
     Y = H * X[None] + Z
     return Frame(X, idx, data_mask, Y, H, channel, noise_var)

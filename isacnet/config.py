@@ -22,6 +22,8 @@ class SimConfig:
     seed: int = 0
     max_range: float = 200.0   # search window for sensing [m]; prior on where targets are
     max_speed: float = 50.0    # search window |v| [m/s]
+    snr_def: str = "antenna"   # "antenna": SNR per receive antenna; "combined": after combining the Nr antennas
+    ls_interp: str = "linear"  # LS pilot channel over time: "linear" between pilots, or "first" pilot held
 
     # Fixed test scenario of Fig. 9 / Fig. 10
     ranges: tuple = (10.0, 50.0, 100.0)    # path length r_l = r1 + r2 [m]
@@ -63,3 +65,20 @@ def small_config(**kw) -> SimConfig:
     base = dict(M=256, N=256, MI=2560, NI=2560, Nt=4, Nr=4)
     base.update(kw)
     return SimConfig(**base)
+
+
+def add_cfg_args(p):
+    """Command-line options shared by the scripts that build a SimConfig."""
+    p.add_argument("--snr-def", choices=["antenna", "combined"], default="antenna",
+                   help="SNR per receive antenna, or after combining the Nr antennas (closer to the paper's Fig. 9)")
+    p.add_argument("--ls", choices=["linear", "first"], default="linear",
+                   help="LS pilot channel: interpolated between pilots, or the first pilot held for the frame")
+    p.add_argument("--no-window", action="store_true", help="search all ranges and velocities, as the paper does")
+
+
+def apply_cfg_args(cfg, args):
+    cfg.snr_def = args.snr_def
+    cfg.ls_interp = args.ls
+    if args.no_window:
+        cfg.max_range = cfg.max_speed = float("inf")
+    return cfg
