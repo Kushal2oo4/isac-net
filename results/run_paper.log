@@ -1,0 +1,204 @@
+== baselines ==
+110/2200
+220/2200
+330/2200
+440/2200
+550/2200
+660/2200
+770/2200
+880/2200
+990/2200
+1100/2200
+1210/2200
+1320/2200
+1430/2200
+1540/2200
+1650/2200
+1760/2200
+1870/2200
+1980/2200
+2090/2200
+2200/2200
+SNR -20.0 | perfect_csi=4.82e-01 map_ls=5.00e-01 damp_ls=5.00e-01 map_recon=4.84e-01 | dft2d=(1.0e+03,1.0e+00) dft2d_clean=(1.0e+03,1.0e+00) sense_pilot=(2.1e+02,9.1e+01) sense_perfect=(2.4e+02,1.4e+04)
+SNR -10.0 | perfect_csi=4.41e-01 map_ls=4.95e-01 damp_ls=4.95e-01 map_recon=4.42e-01 | dft2d=(1.8e+02,1.0e+00) dft2d_clean=(2.2e+02,1.0e+00) sense_pilot=(1.6e+02,8.0e+01) sense_perfect=(1.5e+02,1.1e+04)
+SNR  -5.0 | perfect_csi=3.87e-01 map_ls=4.85e-01 damp_ls=4.85e-01 map_recon=3.88e-01 | dft2d=(8.2e+00,1.7e+00) dft2d_clean=(1.7e+02,9.9e-01) sense_pilot=(1.3e+02,5.6e+01) sense_perfect=(1.3e+02,8.1e+03)
+SNR   0.0 | perfect_csi=2.88e-01 map_ls=4.56e-01 damp_ls=4.56e-01 map_recon=2.88e-01 | dft2d=(4.6e-01,2.7e+00) dft2d_clean=(1.5e+02,9.5e-01) sense_pilot=(1.1e+02,5.6e+01) sense_perfect=(8.2e+01,6.3e+03)
+SNR   5.0 | perfect_csi=1.65e-01 map_ls=3.92e-01 damp_ls=3.94e-01 map_recon=1.65e-01 | dft2d=(6.7e-01,2.2e+00) dft2d_clean=(7.3e+01,9.9e+03) sense_pilot=(9.9e+01,4.6e+01) sense_perfect=(6.6e+01,4.4e+03)
+SNR  10.0 | perfect_csi=5.96e-02 map_ls=3.03e-01 damp_ls=3.07e-01 map_recon=6.03e-02 | dft2d=(5.4e-01,2.3e+00) dft2d_clean=(4.1e+00,1.1e+04) sense_pilot=(4.0e+01,2.5e+01) sense_perfect=(2.8e+01,2.3e+03)
+SNR  15.0 | perfect_csi=4.79e-03 map_ls=2.41e-01 damp_ls=2.44e-01 map_recon=5.25e-03 | dft2d=(4.4e-01,1.5e+00) dft2d_clean=(2.3e+00,1.4e+04) sense_pilot=(4.0e+01,2.2e+01) sense_perfect=(2.7e+01,2.0e+03)
+SNR  20.0 | perfect_csi=2.30e-05 map_ls=2.19e-01 damp_ls=2.20e-01 map_recon=2.95e-05 | dft2d=(4.1e-01,1.5e+00) dft2d_clean=(1.3e+00,1.4e+04) sense_pilot=(2.6e+01,1.4e+01) sense_perfect=(1.7e+01,1.8e+03)
+SNR  25.0 | perfect_csi=3.09e-08 map_ls=2.17e-01 damp_ls=2.17e-01 map_recon=2.16e-07 | dft2d=(4.4e-01,3.3e+00) dft2d_clean=(2.1e+00,8.0e+03) sense_pilot=(1.8e+01,1.1e+01) sense_perfect=(4.9e+00,6.1e+02)
+SNR  30.0 | perfect_csi=4.42e-06 map_ls=2.18e-01 damp_ls=2.18e-01 map_recon=6.17e-06 | dft2d=(4.6e-01,4.5e+00) dft2d_clean=(4.1e+00,9.4e+02) sense_pilot=(1.0e+01,4.1e+00) sense_perfect=(4.0e+00,4.1e+02)
+SNR  40.0 | perfect_csi=0.00e+00 map_ls=2.23e-01 damp_ls=2.23e-01 map_recon=3.09e-08 | dft2d=(4.7e-01,4.4e+00) dft2d_clean=(1.3e+00,1.4e+02) sense_pilot=(4.8e+00,2.3e+00) sense_perfect=(1.3e+00,1.6e+02)
+== train ISAC-NET (literal, one eta for all SNRs, 10 layers) ==
+[snr joint] step 20/200 train 0.6647 val 2.2488 (best 0.6664, Alg. 3 0.6664) (776s)
+[snr joint] step 40/200 train 1.5817 val 1.8075 (best 0.6664, Alg. 3 0.6664) (1585s)
+[snr joint] step 60/200 train 2.1599 val 1.3816 (best 0.6664, Alg. 3 0.6664) (2394s)
+[snr joint] step 80/200 train 1.8750 val 2.7398 (best 0.6664, Alg. 3 0.6664) (3201s)
+[snr joint] step 100/200 train 2.0231 val 1.2261 (best 0.6664, Alg. 3 0.6664) (4006s)
+[snr joint] step 120/200 train 2.4434 val 4.6536 (best 0.6664, Alg. 3 0.6664) (4804s)
+[snr joint] step 140/200 train 3.4272 val 5.8337 (best 0.6664, Alg. 3 0.6664) (5609s)
+[snr joint] step 160/200 train 6.5549 val 5.8162 (best 0.6664, Alg. 3 0.6664) (6429s)
+[snr joint] step 180/200 train 6.7999 val 4.8425 (best 0.6664, Alg. 3 0.6664) (7252s)
+[snr joint] step 200/200 train 5.0157 val 4.8710 (best 0.6664, Alg. 3 0.6664) (8074s)
+SNR 0: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 5: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 10: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 15: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 20: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 25: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 30: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 35: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+SNR 40: [[1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0], [1.0, 0.0, 10.0, 0.0, 0.0]]
+== evaluate literal ==
+110/2200
+220/2200
+330/2200
+440/2200
+550/2200
+660/2200
+770/2200
+880/2200
+990/2200
+1100/2200
+1210/2200
+1320/2200
+1430/2200
+1540/2200
+1650/2200
+1760/2200
+1870/2200
+1980/2200
+2090/2200
+2200/2200
+alg3     SNR -20.0 BER 5.00e-01 SER 9.38e-01 NMSE r 6.1e+03 (med 3.8e+03) v 4.2e+04 (med 3.4e+04)
+alg3     SNR -10.0 BER 4.97e-01 SER 9.36e-01 NMSE r 2.5e+00 (med 4.8e-01) v 3.8e+04 (med 3.2e+04)
+alg3     SNR  -5.0 BER 4.92e-01 SER 9.33e-01 NMSE r 9.4e-01 (med 4.8e-01) v 3.9e+04 (med 3.1e+04)
+alg3     SNR   0.0 BER 4.79e-01 SER 9.24e-01 NMSE r 9.2e-01 (med 4.8e-01) v 3.8e+04 (med 3.2e+04)
+alg3     SNR   5.0 BER 4.60e-01 SER 9.09e-01 NMSE r 1.2e+00 (med 4.8e-01) v 4.0e+04 (med 3.2e+04)
+alg3     SNR  10.0 BER 4.50e-01 SER 8.97e-01 NMSE r 7.9e-01 (med 4.8e-01) v 3.9e+04 (med 3.2e+04)
+alg3     SNR  15.0 BER 4.33e-01 SER 8.77e-01 NMSE r 1.0e+00 (med 4.8e-01) v 3.9e+04 (med 2.8e+04)
+alg3     SNR  20.0 BER 4.40e-01 SER 8.88e-01 NMSE r 8.0e-01 (med 4.8e-01) v 4.1e+04 (med 3.2e+04)
+alg3     SNR  25.0 BER 4.37e-01 SER 8.76e-01 NMSE r 7.6e-01 (med 4.8e-01) v 4.2e+04 (med 3.2e+04)
+alg3     SNR  30.0 BER 4.37e-01 SER 8.79e-01 NMSE r 1.1e+00 (med 4.8e-01) v 3.7e+04 (med 3.2e+04)
+alg3     SNR  40.0 BER 4.40e-01 SER 8.87e-01 NMSE r 1.1e+00 (med 4.8e-01) v 3.9e+04 (med 2.8e+04)
+isacnet  SNR -20.0 BER 5.00e-01 SER 9.38e-01 NMSE r 6.1e+03 (med 3.8e+03) v 4.2e+04 (med 3.4e+04)
+isacnet  SNR -10.0 BER 4.97e-01 SER 9.36e-01 NMSE r 2.5e+00 (med 4.8e-01) v 3.8e+04 (med 3.2e+04)
+isacnet  SNR  -5.0 BER 4.92e-01 SER 9.33e-01 NMSE r 9.4e-01 (med 4.8e-01) v 3.9e+04 (med 3.1e+04)
+isacnet  SNR   0.0 BER 4.79e-01 SER 9.24e-01 NMSE r 9.2e-01 (med 4.8e-01) v 3.8e+04 (med 3.2e+04)
+isacnet  SNR   5.0 BER 4.60e-01 SER 9.09e-01 NMSE r 1.2e+00 (med 4.8e-01) v 4.0e+04 (med 3.2e+04)
+isacnet  SNR  10.0 BER 4.50e-01 SER 8.97e-01 NMSE r 7.9e-01 (med 4.8e-01) v 3.9e+04 (med 3.2e+04)
+isacnet  SNR  15.0 BER 4.33e-01 SER 8.77e-01 NMSE r 1.0e+00 (med 4.8e-01) v 3.9e+04 (med 2.8e+04)
+isacnet  SNR  20.0 BER 4.40e-01 SER 8.88e-01 NMSE r 8.0e-01 (med 4.8e-01) v 4.1e+04 (med 3.2e+04)
+isacnet  SNR  25.0 BER 4.37e-01 SER 8.76e-01 NMSE r 7.6e-01 (med 4.8e-01) v 4.2e+04 (med 3.2e+04)
+isacnet  SNR  30.0 BER 4.37e-01 SER 8.79e-01 NMSE r 1.1e+00 (med 4.8e-01) v 3.7e+04 (med 3.2e+04)
+isacnet  SNR  40.0 BER 4.40e-01 SER 8.87e-01 NMSE r 1.1e+00 (med 4.8e-01) v 3.9e+04 (med 2.8e+04)
+== evaluate Alg. 3 with 4 updates per layer ==
+110/2200
+220/2200
+330/2200
+440/2200
+550/2200
+660/2200
+770/2200
+880/2200
+990/2200
+1100/2200
+1210/2200
+1320/2200
+1430/2200
+1540/2200
+1650/2200
+1760/2200
+1870/2200
+1980/2200
+2090/2200
+2200/2200
+alg3     SNR -20.0 BER 5.15e-01 SER 9.46e-01 NMSE r 2.0e+02 (med 1.5e+02) v 8.9e+01 (med 6.1e+01)
+alg3     SNR -10.0 BER 4.37e-01 SER 8.96e-01 NMSE r 1.5e+02 (med 3.6e+01) v 5.5e+03 (med 1.3e+03)
+alg3     SNR  -5.0 BER 3.81e-01 SER 8.55e-01 NMSE r 2.2e+00 (med 4.8e-01) v 1.3e+04 (med 1.4e+04)
+alg3     SNR   0.0 BER 2.86e-01 SER 7.57e-01 NMSE r 5.0e+00 (med 2.7e-01) v 1.1e+04 (med 6.7e+03)
+alg3     SNR   5.0 BER 1.68e-01 SER 5.50e-01 NMSE r 4.9e+00 (med 2.7e-01) v 6.3e+03 (med 1.5e+03)
+alg3     SNR  10.0 BER 6.14e-02 SER 2.30e-01 NMSE r 3.5e+01 (med 8.1e-08) v 2.5e+03 (med 1.6e-02)
+alg3     SNR  15.0 BER 5.99e-03 SER 2.36e-02 NMSE r 1.5e+01 (med 8.1e-08) v 1.3e+03 (med 1.2e-02)
+alg3     SNR  20.0 BER 5.47e-05 SER 2.17e-04 NMSE r 9.5e+00 (med 8.1e-08) v 9.3e+02 (med 1.2e-02)
+alg3     SNR  25.0 BER 4.12e-07 SER 1.65e-06 NMSE r 5.9e+00 (med 8.1e-08) v 5.7e+02 (med 1.2e-02)
+alg3     SNR  30.0 BER 2.06e-08 SER 8.24e-08 NMSE r 1.9e+00 (med 8.1e-08) v 1.5e+02 (med 1.2e-02)
+alg3     SNR  40.0 BER 0.00e+00 SER 0.00e+00 NMSE r 9.5e-03 (med 8.1e-08) v 3.1e-02 (med 1.2e-02)
+wrote results/paper_fig{8,9,10}.png
+== evaluate with the search window ==
+110/2200
+220/2200
+330/2200
+440/2200
+550/2200
+660/2200
+770/2200
+880/2200
+990/2200
+1100/2200
+1210/2200
+1320/2200
+1430/2200
+1540/2200
+1650/2200
+1760/2200
+1870/2200
+1980/2200
+2090/2200
+2200/2200
+alg3     SNR -20.0 BER 4.99e-01 SER 9.37e-01 NMSE r 1.1e+01 (med 5.0e+00) v 1.3e+01 (med 9.4e+00)
+alg3     SNR -10.0 BER 4.73e-01 SER 9.13e-01 NMSE r 6.8e-01 (med 2.8e-01) v 3.8e+00 (med 3.1e+00)
+alg3     SNR  -5.0 BER 3.93e-01 SER 8.67e-01 NMSE r 3.4e-01 (med 1.3e-01) v 2.2e+00 (med 1.0e+00)
+alg3     SNR   0.0 BER 2.87e-01 SER 7.61e-01 NMSE r 2.0e-01 (med 3.1e-02) v 1.3e+00 (med 3.5e-01)
+alg3     SNR   5.0 BER 1.72e-01 SER 5.61e-01 NMSE r 7.9e-02 (med 8.9e-06) v 7.9e-01 (med 3.3e-02)
+alg3     SNR  10.0 BER 6.58e-02 SER 2.46e-01 NMSE r 6.6e-02 (med 8.1e-08) v 6.0e-01 (med 1.6e-02)
+alg3     SNR  15.0 BER 7.77e-03 SER 3.05e-02 NMSE r 6.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
+alg3     SNR  20.0 BER 1.64e-04 SER 6.49e-04 NMSE r 2.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
+alg3     SNR  25.0 BER 1.43e-04 SER 5.68e-04 NMSE r 8.6e-03 (med 8.1e-08) v 1.4e-01 (med 1.2e-02)
+alg3     SNR  30.0 BER 2.12e-05 SER 8.49e-05 NMSE r 6.1e-03 (med 8.1e-08) v 4.8e-02 (med 1.2e-02)
+alg3     SNR  40.0 BER 1.03e-08 SER 4.12e-08 NMSE r 9.5e-03 (med 8.1e-08) v 3.1e-02 (med 1.2e-02)
+isacnet  SNR -20.0 BER 4.99e-01 SER 9.37e-01 NMSE r 1.1e+01 (med 5.0e+00) v 1.3e+01 (med 9.4e+00)
+isacnet  SNR -10.0 BER 4.73e-01 SER 9.13e-01 NMSE r 6.8e-01 (med 2.8e-01) v 3.8e+00 (med 3.1e+00)
+isacnet  SNR  -5.0 BER 3.93e-01 SER 8.67e-01 NMSE r 3.4e-01 (med 1.3e-01) v 2.2e+00 (med 1.0e+00)
+isacnet  SNR   0.0 BER 2.87e-01 SER 7.61e-01 NMSE r 2.0e-01 (med 3.1e-02) v 1.3e+00 (med 3.5e-01)
+isacnet  SNR   5.0 BER 1.72e-01 SER 5.61e-01 NMSE r 7.9e-02 (med 8.9e-06) v 7.9e-01 (med 3.3e-02)
+isacnet  SNR  10.0 BER 6.58e-02 SER 2.46e-01 NMSE r 6.6e-02 (med 8.1e-08) v 6.0e-01 (med 1.6e-02)
+isacnet  SNR  15.0 BER 7.77e-03 SER 3.05e-02 NMSE r 6.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
+isacnet  SNR  20.0 BER 1.64e-04 SER 6.49e-04 NMSE r 2.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
+isacnet  SNR  25.0 BER 1.43e-04 SER 5.68e-04 NMSE r 8.6e-03 (med 8.1e-08) v 1.4e-01 (med 1.2e-02)
+isacnet  SNR  30.0 BER 2.12e-05 SER 8.49e-05 NMSE r 6.1e-03 (med 8.1e-08) v 4.8e-02 (med 1.2e-02)
+isacnet  SNR  40.0 BER 1.03e-08 SER 4.12e-08 NMSE r 9.5e-03 (med 8.1e-08) v 3.1e-02 (med 1.2e-02)
+110/2200
+220/2200
+330/2200
+440/2200
+550/2200
+660/2200
+770/2200
+880/2200
+990/2200
+1100/2200
+1210/2200
+1320/2200
+1430/2200
+1540/2200
+1650/2200
+1760/2200
+1870/2200
+1980/2200
+2090/2200
+2200/2200
+alg3     SNR -20.0 BER 5.15e-01 SER 9.47e-01 NMSE r 5.2e-01 (med 3.0e-01) v 3.4e+00 (med 2.5e+00)
+alg3     SNR -10.0 BER 4.36e-01 SER 8.95e-01 NMSE r 4.7e-01 (med 2.5e-01) v 2.9e+00 (med 2.2e+00)
+alg3     SNR  -5.0 BER 3.79e-01 SER 8.51e-01 NMSE r 3.4e-01 (med 1.7e-01) v 2.1e+00 (med 1.1e+00)
+alg3     SNR   0.0 BER 2.84e-01 SER 7.54e-01 NMSE r 1.8e-01 (med 1.6e-02) v 1.2e+00 (med 3.4e-01)
+alg3     SNR   5.0 BER 1.68e-01 SER 5.49e-01 NMSE r 1.0e-01 (med 4.8e-06) v 8.5e-01 (med 1.6e-02)
+alg3     SNR  10.0 BER 6.14e-02 SER 2.30e-01 NMSE r 6.1e-02 (med 8.1e-08) v 5.8e-01 (med 1.6e-02)
+alg3     SNR  15.0 BER 5.99e-03 SER 2.36e-02 NMSE r 2.1e-02 (med 8.1e-08) v 2.3e-01 (med 1.2e-02)
+alg3     SNR  20.0 BER 5.47e-05 SER 2.17e-04 NMSE r 2.2e-02 (med 8.1e-08) v 3.0e-01 (med 1.2e-02)
+alg3     SNR  25.0 BER 4.12e-07 SER 1.65e-06 NMSE r 8.6e-03 (med 8.1e-08) v 1.4e-01 (med 1.2e-02)
+alg3     SNR  30.0 BER 2.06e-08 SER 8.24e-08 NMSE r 6.1e-03 (med 8.1e-08) v 4.8e-02 (med 1.2e-02)
+alg3     SNR  40.0 BER 0.00e+00 SER 0.00e+00 NMSE r 9.5e-03 (med 8.1e-08) v 3.1e-02 (med 1.2e-02)
+wrote results/paper_window_fig{8,9,10}.png
+done: results/paper_fig{8,9,10}.png, results/paper_window_fig{8,9,10}.png
