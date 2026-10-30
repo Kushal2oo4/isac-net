@@ -19,6 +19,7 @@ from isacnet.torch_ops import pick_device  # noqa: E402
 from isacnet.isac_net import ISACNet  # noqa: E402
 from isacnet.metrics import ber_ser, nmse  # noqa: E402
 from isacnet.modulation import hard_decision  # noqa: E402
+from isacnet.channel import random_channel  # noqa: E402
 from isacnet.simulator import make_frame  # noqa: E402
 
 
@@ -33,12 +34,28 @@ def nearest_eta(table, snr):
     return table[keys[0]]
 
 
+def draw_targets(cfg, rng, min_sep=5.0):
+    """Random targets for a robustness check: 5-150 m path lengths at least min_sep apart, 3-30 m/s either way."""
+    L = len(cfg.ranges)
+    while True:
+        r = np.sort(rng.uniform(5.0, 150.0, L))
+        if np.all(np.diff(r) >= min_sep):
+            break
+    v = rng.uniform(3.0, 30.0, L) * rng.choice([-1.0, 1.0], L)
+    return r, v
+
+
 def one_trial(job):
     args, snr, trial, eta_table = job
     torch.set_num_threads(1)
     cfg = make_cfg(args)
     rng = np.random.default_rng([args.seed + 99, int(snr * 10) + 1000, trial])
-    frame = make_frame(cfg, snr, rng)
+    if args.random_targets:
+        r_true, v_true = draw_targets(cfg, rng)
+        frame = make_frame(cfg, snr, rng, channel=random_channel(cfg, rng, r_true, v_true))
+    else:
+        r_true, v_true = cfg.ranges, cfg.velocities
+        frame = make_frame(cfg, snr, rng)
     nets = {"alg3": ISACNet(cfg, n_layers=args.layers, report=args.report, n_inner=args.inner,
                   device=pick_device(args.device))}
     if eta_table:
@@ -56,7 +73,7 @@ def one_trial(job):
                 idx = np.full(frame.idx.shape, -1)
                 idx[frame.data_mask] = hard_decision(h["x"])
                 b, s = ber_ser(idx, frame.idx, frame.data_mask)
-                layers.append((b, s) + nmse(h["r"], h["v"], cfg.ranges, cfg.velocities))
+                layers.append((b, s) + nmse(h["r"], h["v"], r_true, v_true))
             res[name] = layers
     return snr, res
 
@@ -73,6 +90,8 @@ def main():
     p.add_argument("--report", choices=["grid", "fine"], default="grid")
     p.add_argument("--eta", default=None, help="JSON written by train_isacnet.py")
     p.add_argument("--trials", type=int, default=40)
+    p.add_argument("--random-targets", action="store_true",
+                   help="place the targets at random in every trial instead of the fixed 10/50/100 m, 5/10/15 m/s")
     p.add_argument("--workers", type=int, default=os.cpu_count())
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", default="results/isacnet")
