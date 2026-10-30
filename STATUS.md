@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup retrain: lower lr, 5 layers, 0-25 dB)
 
-**Updated:** 2026-10-30 11:53 PM IST
+**Updated:** 2026-10-31 01:14 AM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 53318, elapsed 01:44:53)
+**State:** RUNNING (pid 53318, elapsed 03:05:31)
 
 **Current step:** `scripts/eval_isacnet.py`
 
@@ -22,8 +22,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-SNR 15: [[1.0, 0.0, 9.89, 0.0, 0.127], [1.0, -0.1, 9.918, 0.0, 0.002], [0.896, -0.107, 9.945, 0.0, 0.089], [0.893, 0.112, 9.967, 0.017, 0.0], [0.894, 0.0, 10.0, 0.134, 0.0]]
-SNR 20: [[1.0, 0.0, 9.89, 0.0, 0.127], [1.0, -0.1, 9.918, 0.0, 0.002], [0.896, -0.107, 9.945, 0.0, 0.089], [0.893, 0.112, 9.967, 0.017, 0.0], [0.894, 0.0, 10.0, 0.134, 0.0]]
 SNR 25: [[1.0, 0.0, 9.89, 0.0, 0.127], [1.0, -0.1, 9.918, 0.0, 0.002], [0.896, -0.107, 9.945, 0.0, 0.089], [0.893, 0.112, 9.967, 0.017, 0.0], [0.894, 0.0, 10.0, 0.134, 0.0]]
 == stage C: evaluate literal, with window ==
 110/2200
@@ -37,6 +35,8 @@ SNR 25: [[1.0, 0.0, 9.89, 0.0, 0.127], [1.0, -0.1, 9.918, 0.0, 0.002], [0.896, -
 990/2200
 1100/2200
 1210/2200
+1320/2200
+1430/2200
 ```
 
 ## Result files
