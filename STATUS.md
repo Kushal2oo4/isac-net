@@ -1,10 +1,10 @@
 # ISAC-NET run status (paper setup retrain: lower lr, 5 layers, 0-25 dB)
 
-**Updated:** 2026-10-30 10:30 PM IST
+**Updated:** 2026-10-30 10:40 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 53318, elapsed 21:47)
+**State:** RUNNING (pid 53318, elapsed 31:50)
 
 **Current step:** `scripts/train_isacnet.py`
 
@@ -21,8 +21,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-== stage A: test lr 0.002 ==
-[snr joint] step 10/40 train 1.1993 val 1.7942 (best 1.7942, Alg. 3 1.9665) (242s)
 [snr joint] step 20/40 train 1.3210 val 1.3622 (best 1.3622, Alg. 3 1.9665) (496s)
 [snr joint] step 30/40 train 1.0300 val 1.3911 (best 1.3622, Alg. 3 1.9665) (745s)
 [snr joint] step 40/40 train 1.1588 val 1.2615 (best 1.2615, Alg. 3 1.9665) (992s)
@@ -36,6 +34,8 @@ test finished: lr 0.002
 == stage B: train lr 0.002 ==
 [snr joint] step 20/200 train 1.2001 val 1.3745 (best 1.3745, Alg. 3 1.9665) (410s)
 [snr joint] step 40/200 train 0.9917 val 1.3573 (best 1.3573, Alg. 3 1.9665) (827s)
+[snr joint] step 60/200 train 0.8839 val 0.9651 (best 0.9651, Alg. 3 1.9665) (1250s)
+[snr joint] step 80/200 train 0.8974 val 0.8499 (best 0.8499, Alg. 3 1.9665) (1676s)
 ```
 
 ## Result files
