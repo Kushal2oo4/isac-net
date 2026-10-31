@@ -1,10 +1,10 @@
 # ISAC-NET run status (random-target check of the lower-lr eta)
 
-**Updated:** 2026-10-31 06:28 PM IST
+**Updated:** 2026-10-31 06:38 PM IST
 
 _If this time stops moving, the Mac run has stopped (or the Mac is offline/asleep)._
 
-**State:** RUNNING (pid 80490, elapsed 20:25)
+**State:** RUNNING (pid 80490, elapsed 30:28)
 
 **Current step:** `scripts/eval_isacnet.py`
 
@@ -20,11 +20,6 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 
 ## Last log lines
 ```
-== evaluate literal, random targets ==
-70/1400
-140/1400
-210/1400
-280/1400
 350/1400
 420/1400
 490/1400
@@ -33,6 +28,13 @@ _If this time stops moving, the Mac run has stopped (or the Mac is offline/aslee
 700/1400
 770/1400
 840/1400
+910/1400
+980/1400
+1050/1400
+1120/1400
+1190/1400
+1260/1400
+1330/1400
 ```
 
 ## Result files
