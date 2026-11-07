@@ -25,6 +25,12 @@ class SimConfig:
     snr_def: str = "antenna"   # "antenna": SNR per receive antenna; "combined": after combining the Nr antennas
     ls_interp: str = "linear"  # LS pilot channel over time: "linear" between pilots, or "first" pilot held
 
+    # Distributed clutter (Sagduyu et al., arXiv 2610.40586, eqs. 4-5); off when n_clutter = 0
+    n_clutter: int = 0             # N_c scatterers per frame
+    clutter_strength: float = 1.0  # alpha_c: clutter RCS log-uniform in [1e-2, 1] * alpha_c * rcs
+    clutter_doppler_hz: float = 30.0  # sigma_f,c: clutter Doppler ~ N(0, sigma^2) [Hz]
+    clutter_range: tuple = (5.0, 200.0)  # path lengths of clutter scatterers [m]
+
     # Fixed test scenario of Fig. 9 / Fig. 10
     ranges: tuple = (10.0, 50.0, 100.0)    # path length r_l = r1 + r2 [m]
     velocities: tuple = (5.0, 10.0, 15.0)  # [m/s], f_d = v * fc / c (eq. 32)
@@ -74,11 +80,17 @@ def add_cfg_args(p):
     p.add_argument("--ls", choices=["linear", "first"], default="linear",
                    help="LS pilot channel: interpolated between pilots, or the first pilot held for the frame")
     p.add_argument("--no-window", action="store_true", help="search all ranges and velocities, as the paper does")
+    p.add_argument("--clutter", type=int, default=0, help="N_c clutter scatterers per frame (0 = no clutter)")
+    p.add_argument("--clutter-strength", type=float, default=1.0, help="alpha_c: clutter RCS scale relative to a target")
+    p.add_argument("--clutter-doppler", type=float, default=30.0, help="sigma_f,c: clutter Doppler spread [Hz]")
 
 
 def apply_cfg_args(cfg, args):
     cfg.snr_def = args.snr_def
     cfg.ls_interp = args.ls
+    cfg.n_clutter = args.clutter
+    cfg.clutter_strength = args.clutter_strength
+    cfg.clutter_doppler_hz = args.clutter_doppler
     if args.no_window:
         cfg.max_range = cfg.max_speed = float("inf")
     return cfg

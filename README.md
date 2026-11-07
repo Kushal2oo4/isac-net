@@ -150,3 +150,32 @@ These are deliberate choices; each is a candidate discussion point in the report
     and keeps the η with the lowest loss on fixed validation frames, starting from the
     hand-set Alg. 3 values. Our first literal-Alg. 3 run without these safeguards diverged
     at 20–25 dB.
+
+## Clutter (scatterers) from Sagduyu et al., arXiv 2610.40586
+
+Opt-in distributed clutter, eqs. (4)-(5) of that paper: `--clutter N_c --clutter-strength α_c --clutter-doppler σ_f,c`
+on every script (`SimConfig.n_clutter`, default 0, so all earlier results are unchanged). Each scatterer has a random
+path length in 5-200 m, RCS log-uniform in [0.01, 1]·α_c·(target RCS) and Doppler ~ N(0, σ_f,c²), with the same
+propagation and fading as a target. Clutter is part of the true channel H but is not a target, so it is ignored by
+the sensing truth and the loss (`isac_loss` now reads the true targets from each frame).
+
+`train_isacnet.py --joint --snr-uniform --random-clutter --random-targets` trains one η on frames whose SNR, clutter
+condition and targets are all drawn at random (the paper's domain-randomised training), instead of per-SNR training.
+
+Quick check (`scripts/run_clutter_check.sh`: paper setup, literal Alg. 3, 5 layers, 16 frames per point, ISAC-NET =
+`eta_paper_lr.json`, trained without clutter, σ_f,c = 30 Hz):
+
+| N_c, α_c | BER @ 20 dB, Alg. 3 → ISAC-NET | median range NMSE @ 20 dB (Alg. 3 / ISAC-NET) |
+|---|---|---|
+| no clutter | 2.5e-2 → 2.3e-3 | 4e-2 / 2.5e-7 |
+| 5, 0.1 | 2.7e-2 → 3.5e-3 | 0.10 / 0.13 |
+| 5, 1 | 3.0e-2 → 3.7e-3 | 0.12 / 0.15 |
+| 20, 0.1 | 3.1e-2 → 5.3e-3 | 0.31 / 0.31 |
+| 20, 1 | 3.2e-2 → 5.3e-3 | 0.31 / 0.31 |
+
+- Communication survives clutter: ISAC-NET keeps its ~6x BER gain over Alg. 3, and its BER rises only ~2x.
+- Sensing breaks even with 5 weak scatterers: the cyclic peak extraction reports clutter peaks as targets. Clutter
+  Doppler (σ = 30 Hz, ≈ 2 m/s) is far below the ≈ 14 m/s velocity bin, so η alone cannot separate it from targets;
+  that needs a clutter-suppression stage before sensing (the paper's DLCS U-Net, or a zero-Doppler notch).
+- `scripts/run_clutter_train.sh` (Mac, CPU) trains one η on random SNR + clutter and compares it with the
+  clutter-free η on clean and cluttered frames.

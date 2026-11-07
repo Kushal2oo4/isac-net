@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from isacnet import SimConfig, add_cfg_args, apply_cfg_args, small_config  # noqa: E402
 from isacnet.torch_ops import pick_device  # noqa: E402
 from isacnet.isac_net import ISACNet, isac_loss  # noqa: E402
+from isacnet.channel import draw_clutter_condition, draw_targets, random_channel  # noqa: E402
 from isacnet.simulator import make_frame  # noqa: E402
 
 
@@ -57,7 +58,10 @@ def train_one(job):
     val_rng = np.random.default_rng([args.seed, 8, key])
 
     def draw(r):
-        return make_frame(cfg, float(r.choice(snrs)), r)
+        snr_db = float(r.uniform(min(snrs), max(snrs))) if args.snr_uniform else float(r.choice(snrs))
+        channel = random_channel(cfg, r, *draw_targets(cfg, r)) if args.random_targets else None
+        clutter = draw_clutter_condition(cfg, r) if args.random_clutter else None
+        return make_frame(cfg, snr_db, r, channel=channel, clutter=clutter)
 
     val = [draw(val_rng) for _ in range(args.val_frames)]
     snr = "joint" if len(snrs) > 1 else snrs[0]
@@ -117,6 +121,11 @@ def main():
     p.add_argument("--threads", type=int, default=1, help="torch threads per worker")
     p.add_argument("--joint", action="store_true",
                    help="learn one eta over all --snr values (frames draw a random SNR) instead of one per SNR")
+    p.add_argument("--snr-uniform", action="store_true",
+                   help="with --joint: draw each frame's SNR uniformly between min and max --snr, not from the list")
+    p.add_argument("--random-targets", action="store_true", help="random target ranges / velocities in every frame")
+    p.add_argument("--random-clutter", action="store_true",
+                   help="random clutter condition per frame: N_c in 0..--clutter, strength and Doppler spread drawn too")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", default="results/eta.json")
     args = p.parse_args()

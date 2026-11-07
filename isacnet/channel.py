@@ -49,8 +49,10 @@ def effective_channel(cfg: SimConfig, gains, ranges, velocities):
     return H
 
 
-def random_channel(cfg: SimConfig, rng, ranges=None, velocities=None):
-    """Draw a channel for the given targets (default: cfg.ranges / cfg.velocities)."""
+def random_channel(cfg: SimConfig, rng, ranges=None, velocities=None, rcs=None):
+    """Draw a channel for the given targets (default: cfg.ranges / cfg.velocities).
+
+    rcs: scalar or one value per path (default cfg.rcs)."""
     ranges = np.asarray(cfg.ranges if ranges is None else ranges, dtype=float)
     velocities = np.asarray(cfg.velocities if velocities is None else velocities, dtype=float)
     L = len(ranges)
@@ -62,7 +64,8 @@ def random_channel(cfg: SimConfig, rng, ranges=None, velocities=None):
     if cfg.path_loss == "physical":
         # Large-scale factor F_l ~ lambda^2 sigma / ((4 pi)^3 (r1 r2)^2) is a power;
         # use its square root as the amplitude.
-        amp = np.sqrt(cfg.lam ** 2 * cfg.rcs / ((4 * np.pi) ** 3 * (r1 * r2) ** 2))
+        rcs = np.broadcast_to(np.asarray(cfg.rcs if rcs is None else rcs, dtype=float), (L,))
+        amp = np.sqrt(cfg.lam ** 2 * rcs / ((4 * np.pi) ** 3 * (r1 * r2) ** 2))
     else:
         amp = np.ones(L)
     fe = rng.weibull(cfg.weibull_shape, L)
@@ -72,3 +75,49 @@ def random_channel(cfg: SimConfig, rng, ranges=None, velocities=None):
         array_gain = np.conj(steering(cfg.Nt, aod[l])).sum()  # d_t^H 1_Nt
         gains[l] = fe[l] * amp[l] * carrier[l] * array_gain * steering(cfg.Nr, aoa[l])
     return Channel(gains, ranges, velocities, aod, aoa)
+
+
+def random_clutter(cfg: SimConfig, rng, n=None, strength=None, doppler_hz=None):
+    """Distributed clutter as in Sagduyu et al. (arXiv 2610.40586), eqs. (4)-(5).
+
+    n scatterers (default cfg.n_clutter) at path lengths uniform in
+    cfg.clutter_range, each with
+      * RCS log-uniform in [1e-2, 1] * strength * cfg.rcs  (strength = alpha_c),
+      * a Doppler shift f ~ N(0, doppler_hz^2)             (doppler_hz = sigma_f,c),
+        i.e. a radial velocity v = f c / fc (eq. 32),
+    and the same propagation, array and fading model as a target. Clutter is
+    part of the true channel H but not a target: sensing truth and the
+    sensing loss ignore it. Returns None when n == 0.
+    """
+    n = cfg.n_clutter if n is None else n
+    if n <= 0:
+        return None
+    strength = cfg.clutter_strength if strength is None else strength
+    doppler_hz = cfg.clutter_doppler_hz if doppler_hz is None else doppler_hz
+    lo, hi = cfg.clutter_range
+    ranges = rng.uniform(lo, hi, n)
+    velocities = rng.normal(0.0, doppler_hz, n) * C / cfg.fc
+    rcs = strength * cfg.rcs * 10.0 ** rng.uniform(-2.0, 0.0, n)
+    return random_channel(cfg, rng, ranges, velocities, rcs=rcs)
+
+
+def draw_targets(cfg: SimConfig, rng, min_sep=5.0):
+    """Random targets: 5-150 m path lengths at least min_sep apart, 3-30 m/s either way."""
+    L = len(cfg.ranges)
+    while True:
+        r = np.sort(rng.uniform(5.0, 150.0, L))
+        if np.all(np.diff(r) >= min_sep):
+            break
+    v = rng.uniform(3.0, 30.0, L) * rng.choice([-1.0, 1.0], L)
+    return r, v
+
+
+def draw_clutter_condition(cfg: SimConfig, rng):
+    """Random clutter condition for domain-randomised training (as in Sagduyu et al.,
+    Sec. VI: density, strength and Doppler spread drawn per sample):
+    N_c ~ U{0..cfg.n_clutter}, alpha_c log-uniform in [0.01, 1] * cfg.clutter_strength,
+    sigma_f,c ~ U[0, cfg.clutter_doppler_hz]."""
+    n = int(rng.integers(0, cfg.n_clutter + 1))
+    strength = cfg.clutter_strength * 10.0 ** rng.uniform(-2.0, 0.0)
+    doppler = rng.uniform(0.0, cfg.clutter_doppler_hz)
+    return random_clutter(cfg, rng, n, strength, doppler)
