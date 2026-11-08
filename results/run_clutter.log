@@ -1,0 +1,278 @@
+== train: one eta, random SNR + clutter ==
+[snr joint] step 15/150 train 1.1939 val 1.2105 (best 1.2105, Alg. 3 1.5080) (343s)
+[snr joint] step 30/150 train 1.1808 val 1.0948 (best 1.0948, Alg. 3 1.5080) (1471s)
+[snr joint] step 45/150 train 1.0762 val 1.0567 (best 1.0567, Alg. 3 1.5080) (1800s)
+[snr joint] step 60/150 train 0.8148 val 0.9004 (best 0.9004, Alg. 3 1.5080) (2121s)
+[snr joint] step 75/150 train 0.8149 val 0.8360 (best 0.8360, Alg. 3 1.5080) (2446s)
+[snr joint] step 90/150 train 1.0200 val 0.8678 (best 0.8360, Alg. 3 1.5080) (2773s)
+[snr joint] step 105/150 train 0.8343 val 0.8319 (best 0.8319, Alg. 3 1.5080) (3102s)
+[snr joint] step 120/150 train 0.8905 val 0.8309 (best 0.8309, Alg. 3 1.5080) (3448s)
+[snr joint] step 135/150 train 0.7212 val 0.8308 (best 0.8308, Alg. 3 1.5080) (3795s)
+[snr joint] step 150/150 train 0.7833 val 0.8305 (best 0.8305, Alg. 3 1.5080) (4143s)
+SNR 0: [[1.0, 0.0, 9.924, 0.001, 0.126], [1.0, -0.097, 9.918, 0.0, 0.0], [0.9, -0.105, 9.97, 0.0, 0.09], [0.896, 0.105, 9.979, 0.0, 0.0], [0.897, 0.0, 10.0, 0.088, 0.0]]
+SNR 25: [[1.0, 0.0, 9.924, 0.001, 0.126], [1.0, -0.097, 9.918, 0.0, 0.0], [0.9, -0.105, 9.97, 0.0, 0.09], [0.896, 0.105, 9.979, 0.0, 0.0], [0.897, 0.0, 10.0, 0.088, 0.0]]
+== eval eta_paper_lr, N_c=0 alpha_c=1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.96e-01 SER 7.47e-01 NMSE r 9.6e-02 (med 4.4e-03) v 1.1e+00 (med 7.3e-02)
+alg3     SNR   5.0 BER 1.84e-01 SER 5.76e-01 NMSE r 1.2e-01 (med 2.1e-04) v 7.4e-01 (med 1.6e-02)
+alg3     SNR  10.0 BER 1.02e-01 SER 3.66e-01 NMSE r 4.1e-02 (med 8.1e-08) v 4.0e-01 (med 1.6e-02)
+alg3     SNR  15.0 BER 5.86e-02 SER 2.23e-01 NMSE r 8.1e-02 (med 8.1e-08) v 4.7e-01 (med 1.6e-02)
+alg3     SNR  20.0 BER 2.45e-02 SER 9.68e-02 NMSE r 1.1e-01 (med 8.1e-08) v 1.2e+00 (med 1.5e-02)
+alg3     SNR  25.0 BER 9.02e-03 SER 3.61e-02 NMSE r 1.1e-01 (med 8.1e-08) v 1.0e+00 (med 1.2e-02)
+isacnet  SNR   0.0 BER 2.89e-01 SER 7.63e-01 NMSE r 1.3e-01 (med 9.5e-03) v 8.1e-01 (med 1.5e-01)
+isacnet  SNR   5.0 BER 1.74e-01 SER 5.64e-01 NMSE r 9.4e-02 (med 2.0e-04) v 8.6e-01 (med 4.9e-02)
+isacnet  SNR  10.0 BER 6.90e-02 SER 2.58e-01 NMSE r 6.3e-02 (med 8.1e-08) v 3.0e-01 (med 1.6e-02)
+isacnet  SNR  15.0 BER 1.33e-02 SER 5.24e-02 NMSE r 5.8e-02 (med 8.1e-08) v 1.4e-01 (med 1.2e-02)
+isacnet  SNR  20.0 BER 2.35e-03 SER 9.41e-03 NMSE r 5.0e-02 (med 8.1e-08) v 2.6e-01 (med 1.2e-02)
+isacnet  SNR  25.0 BER 6.46e-04 SER 2.58e-03 NMSE r 1.4e-02 (med 1.4e-07) v 1.3e-01 (med 1.2e-02)
+== eval eta_clutter_rand, N_c=0 alpha_c=1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.96e-01 SER 7.47e-01 NMSE r 9.6e-02 (med 4.4e-03) v 1.1e+00 (med 7.3e-02)
+alg3     SNR   5.0 BER 1.84e-01 SER 5.76e-01 NMSE r 1.2e-01 (med 2.1e-04) v 7.4e-01 (med 1.6e-02)
+alg3     SNR  10.0 BER 1.02e-01 SER 3.66e-01 NMSE r 4.1e-02 (med 8.1e-08) v 4.0e-01 (med 1.6e-02)
+alg3     SNR  15.0 BER 5.86e-02 SER 2.23e-01 NMSE r 8.1e-02 (med 8.1e-08) v 4.7e-01 (med 1.6e-02)
+alg3     SNR  20.0 BER 2.45e-02 SER 9.68e-02 NMSE r 1.1e-01 (med 8.1e-08) v 1.2e+00 (med 1.5e-02)
+alg3     SNR  25.0 BER 9.02e-03 SER 3.61e-02 NMSE r 1.1e-01 (med 8.1e-08) v 1.0e+00 (med 1.2e-02)
+isacnet  SNR   0.0 BER 2.86e-01 SER 7.57e-01 NMSE r 1.1e-01 (med 1.4e-02) v 1.2e+00 (med 2.2e-01)
+isacnet  SNR   5.0 BER 1.72e-01 SER 5.61e-01 NMSE r 8.9e-02 (med 2.0e-04) v 9.1e-01 (med 5.1e-02)
+isacnet  SNR  10.0 BER 6.65e-02 SER 2.49e-01 NMSE r 5.7e-02 (med 8.1e-08) v 4.2e-01 (med 1.6e-02)
+isacnet  SNR  15.0 BER 1.16e-02 SER 4.57e-02 NMSE r 4.4e-02 (med 8.1e-08) v 1.4e-01 (med 1.2e-02)
+isacnet  SNR  20.0 BER 1.53e-03 SER 6.13e-03 NMSE r 3.1e-02 (med 8.1e-08) v 2.1e-01 (med 1.2e-02)
+isacnet  SNR  25.0 BER 2.13e-04 SER 8.52e-04 NMSE r 1.0e-02 (med 8.1e-08) v 3.6e-02 (med 1.2e-02)
+== eval eta_paper_lr, N_c=5 alpha_c=1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.97e-01 SER 7.48e-01 NMSE r 2.8e-01 (med 1.4e-01) v 7.8e-01 (med 4.0e-01)
+alg3     SNR   5.0 BER 1.84e-01 SER 5.75e-01 NMSE r 1.5e-01 (med 1.3e-01) v 7.9e-01 (med 3.4e-01)
+alg3     SNR  10.0 BER 1.02e-01 SER 3.66e-01 NMSE r 1.4e-01 (med 8.8e-02) v 5.1e-01 (med 3.4e-01)
+alg3     SNR  15.0 BER 5.96e-02 SER 2.27e-01 NMSE r 1.7e-01 (med 1.5e-01) v 4.0e-01 (med 3.4e-01)
+alg3     SNR  20.0 BER 2.79e-02 SER 1.10e-01 NMSE r 3.0e-01 (med 1.3e-01) v 5.6e-01 (med 4.8e-01)
+alg3     SNR  25.0 BER 1.50e-02 SER 5.98e-02 NMSE r 2.3e-01 (med 2.3e-01) v 9.8e-01 (med 4.0e-01)
+isacnet  SNR   0.0 BER 2.87e-01 SER 7.60e-01 NMSE r 2.6e-01 (med 1.3e-01) v 7.8e-01 (med 4.0e-01)
+isacnet  SNR   5.0 BER 1.73e-01 SER 5.62e-01 NMSE r 1.4e-01 (med 1.1e-01) v 6.1e-01 (med 3.4e-01)
+isacnet  SNR  10.0 BER 6.80e-02 SER 2.54e-01 NMSE r 1.4e-01 (med 9.5e-02) v 4.6e-01 (med 3.4e-01)
+isacnet  SNR  15.0 BER 1.81e-02 SER 7.04e-02 NMSE r 1.6e-01 (med 1.4e-01) v 3.5e-01 (med 3.4e-01)
+isacnet  SNR  20.0 BER 4.40e-03 SER 1.74e-02 NMSE r 2.8e-01 (med 1.5e-01) v 4.7e-01 (med 4.8e-01)
+isacnet  SNR  25.0 BER 1.76e-03 SER 7.03e-03 NMSE r 1.9e-01 (med 1.6e-01) v 4.3e-01 (med 3.5e-01)
+== eval eta_clutter_rand, N_c=5 alpha_c=1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.97e-01 SER 7.48e-01 NMSE r 2.8e-01 (med 1.4e-01) v 7.8e-01 (med 4.0e-01)
+alg3     SNR   5.0 BER 1.84e-01 SER 5.75e-01 NMSE r 1.5e-01 (med 1.3e-01) v 7.9e-01 (med 3.4e-01)
+alg3     SNR  10.0 BER 1.02e-01 SER 3.66e-01 NMSE r 1.4e-01 (med 8.8e-02) v 5.1e-01 (med 3.4e-01)
+alg3     SNR  15.0 BER 5.96e-02 SER 2.27e-01 NMSE r 1.7e-01 (med 1.5e-01) v 4.0e-01 (med 3.4e-01)
+alg3     SNR  20.0 BER 2.79e-02 SER 1.10e-01 NMSE r 3.0e-01 (med 1.3e-01) v 5.6e-01 (med 4.8e-01)
+alg3     SNR  25.0 BER 1.50e-02 SER 5.98e-02 NMSE r 2.3e-01 (med 2.3e-01) v 9.8e-01 (med 4.0e-01)
+isacnet  SNR   0.0 BER 2.87e-01 SER 7.58e-01 NMSE r 2.6e-01 (med 1.3e-01) v 7.7e-01 (med 3.9e-01)
+isacnet  SNR   5.0 BER 1.72e-01 SER 5.60e-01 NMSE r 1.3e-01 (med 1.0e-01) v 6.9e-01 (med 3.4e-01)
+isacnet  SNR  10.0 BER 6.68e-02 SER 2.50e-01 NMSE r 1.4e-01 (med 9.5e-02) v 3.8e-01 (med 3.4e-01)
+isacnet  SNR  15.0 BER 1.35e-02 SER 5.28e-02 NMSE r 1.6e-01 (med 1.4e-01) v 3.7e-01 (med 3.4e-01)
+isacnet  SNR  20.0 BER 3.46e-03 SER 1.36e-02 NMSE r 2.8e-01 (med 1.4e-01) v 4.7e-01 (med 4.8e-01)
+isacnet  SNR  25.0 BER 1.35e-03 SER 5.40e-03 NMSE r 1.9e-01 (med 1.6e-01) v 4.4e-01 (med 3.5e-01)
+== eval eta_paper_lr, N_c=20 alpha_c=0.1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.98e-01 SER 7.49e-01 NMSE r 2.9e-01 (med 2.5e-01) v 7.5e-01 (med 5.5e-01)
+alg3     SNR   5.0 BER 1.87e-01 SER 5.81e-01 NMSE r 2.2e-01 (med 2.2e-01) v 4.9e-01 (med 4.0e-01)
+alg3     SNR  10.0 BER 1.04e-01 SER 3.74e-01 NMSE r 2.3e-01 (med 1.9e-01) v 4.4e-01 (med 3.8e-01)
+alg3     SNR  15.0 BER 6.13e-02 SER 2.32e-01 NMSE r 2.5e-01 (med 2.5e-01) v 5.0e-01 (med 4.1e-01)
+alg3     SNR  20.0 BER 2.77e-02 SER 1.09e-01 NMSE r 2.6e-01 (med 2.6e-01) v 5.8e-01 (med 4.8e-01)
+alg3     SNR  25.0 BER 1.55e-02 SER 6.17e-02 NMSE r 2.7e-01 (med 2.5e-01) v 5.6e-01 (med 4.7e-01)
+isacnet  SNR   0.0 BER 2.88e-01 SER 7.60e-01 NMSE r 2.6e-01 (med 2.3e-01) v 6.9e-01 (med 5.4e-01)
+isacnet  SNR   5.0 BER 1.76e-01 SER 5.69e-01 NMSE r 2.3e-01 (med 2.2e-01) v 6.3e-01 (med 4.0e-01)
+isacnet  SNR  10.0 BER 7.13e-02 SER 2.64e-01 NMSE r 2.3e-01 (med 1.9e-01) v 4.5e-01 (med 4.0e-01)
+isacnet  SNR  15.0 BER 1.78e-02 SER 6.92e-02 NMSE r 2.4e-01 (med 2.5e-01) v 4.8e-01 (med 4.7e-01)
+isacnet  SNR  20.0 BER 4.18e-03 SER 1.67e-02 NMSE r 2.4e-01 (med 2.6e-01) v 5.0e-01 (med 4.8e-01)
+isacnet  SNR  25.0 BER 3.74e-03 SER 1.47e-02 NMSE r 2.6e-01 (med 2.5e-01) v 4.6e-01 (med 4.4e-01)
+== eval eta_clutter_rand, N_c=20 alpha_c=0.1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.98e-01 SER 7.49e-01 NMSE r 2.9e-01 (med 2.5e-01) v 7.5e-01 (med 5.5e-01)
+alg3     SNR   5.0 BER 1.87e-01 SER 5.81e-01 NMSE r 2.2e-01 (med 2.2e-01) v 4.9e-01 (med 4.0e-01)
+alg3     SNR  10.0 BER 1.04e-01 SER 3.74e-01 NMSE r 2.3e-01 (med 1.9e-01) v 4.4e-01 (med 3.8e-01)
+alg3     SNR  15.0 BER 6.13e-02 SER 2.32e-01 NMSE r 2.5e-01 (med 2.5e-01) v 5.0e-01 (med 4.1e-01)
+alg3     SNR  20.0 BER 2.77e-02 SER 1.09e-01 NMSE r 2.6e-01 (med 2.6e-01) v 5.8e-01 (med 4.8e-01)
+alg3     SNR  25.0 BER 1.55e-02 SER 6.17e-02 NMSE r 2.7e-01 (med 2.5e-01) v 5.6e-01 (med 4.7e-01)
+isacnet  SNR   0.0 BER 2.87e-01 SER 7.59e-01 NMSE r 2.6e-01 (med 2.3e-01) v 6.9e-01 (med 5.4e-01)
+isacnet  SNR   5.0 BER 1.75e-01 SER 5.67e-01 NMSE r 2.3e-01 (med 2.2e-01) v 6.8e-01 (med 4.0e-01)
+isacnet  SNR  10.0 BER 7.06e-02 SER 2.62e-01 NMSE r 2.2e-01 (med 1.8e-01) v 4.4e-01 (med 3.8e-01)
+isacnet  SNR  15.0 BER 1.62e-02 SER 6.30e-02 NMSE r 2.5e-01 (med 2.5e-01) v 4.8e-01 (med 4.7e-01)
+isacnet  SNR  20.0 BER 3.17e-03 SER 1.27e-02 NMSE r 2.4e-01 (med 2.6e-01) v 5.0e-01 (med 4.8e-01)
+isacnet  SNR  25.0 BER 2.84e-03 SER 1.12e-02 NMSE r 2.6e-01 (med 2.5e-01) v 4.7e-01 (med 4.4e-01)
+== eval eta_paper_lr, N_c=20 alpha_c=1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.99e-01 SER 7.50e-01 NMSE r 2.7e-01 (med 2.6e-01) v 6.3e-01 (med 5.4e-01)
+alg3     SNR   5.0 BER 1.90e-01 SER 5.86e-01 NMSE r 2.8e-01 (med 2.5e-01) v 6.2e-01 (med 5.2e-01)
+alg3     SNR  10.0 BER 1.07e-01 SER 3.82e-01 NMSE r 2.6e-01 (med 2.5e-01) v 6.0e-01 (med 5.1e-01)
+alg3     SNR  15.0 BER 6.34e-02 SER 2.41e-01 NMSE r 2.8e-01 (med 2.6e-01) v 6.5e-01 (med 6.5e-01)
+alg3     SNR  20.0 BER 3.14e-02 SER 1.24e-01 NMSE r 2.6e-01 (med 2.7e-01) v 6.3e-01 (med 5.8e-01)
+alg3     SNR  25.0 BER 1.96e-02 SER 7.81e-02 NMSE r 3.0e-01 (med 3.0e-01) v 7.1e-01 (med 6.3e-01)
+isacnet  SNR   0.0 BER 2.88e-01 SER 7.61e-01 NMSE r 2.8e-01 (med 2.6e-01) v 7.1e-01 (med 5.6e-01)
+isacnet  SNR   5.0 BER 1.79e-01 SER 5.76e-01 NMSE r 2.8e-01 (med 2.5e-01) v 6.5e-01 (med 5.4e-01)
+isacnet  SNR  10.0 BER 7.42e-02 SER 2.74e-01 NMSE r 2.6e-01 (med 2.5e-01) v 6.0e-01 (med 5.1e-01)
+isacnet  SNR  15.0 BER 2.11e-02 SER 8.21e-02 NMSE r 2.9e-01 (med 2.6e-01) v 6.4e-01 (med 6.3e-01)
+isacnet  SNR  20.0 BER 6.59e-03 SER 2.58e-02 NMSE r 2.6e-01 (med 2.7e-01) v 5.8e-01 (med 5.8e-01)
+isacnet  SNR  25.0 BER 6.58e-03 SER 2.54e-02 NMSE r 2.9e-01 (med 2.9e-01) v 6.0e-01 (med 5.6e-01)
+== eval eta_clutter_rand, N_c=20 alpha_c=1 ==
+15/300
+30/300
+45/300
+60/300
+75/300
+90/300
+105/300
+120/300
+135/300
+150/300
+165/300
+180/300
+195/300
+210/300
+225/300
+240/300
+255/300
+270/300
+285/300
+300/300
+alg3     SNR   0.0 BER 2.99e-01 SER 7.50e-01 NMSE r 2.7e-01 (med 2.6e-01) v 6.3e-01 (med 5.4e-01)
+alg3     SNR   5.0 BER 1.90e-01 SER 5.86e-01 NMSE r 2.8e-01 (med 2.5e-01) v 6.2e-01 (med 5.2e-01)
+alg3     SNR  10.0 BER 1.07e-01 SER 3.82e-01 NMSE r 2.6e-01 (med 2.5e-01) v 6.0e-01 (med 5.1e-01)
+alg3     SNR  15.0 BER 6.34e-02 SER 2.41e-01 NMSE r 2.8e-01 (med 2.6e-01) v 6.5e-01 (med 6.5e-01)
+alg3     SNR  20.0 BER 3.14e-02 SER 1.24e-01 NMSE r 2.6e-01 (med 2.7e-01) v 6.3e-01 (med 5.8e-01)
+alg3     SNR  25.0 BER 1.96e-02 SER 7.81e-02 NMSE r 3.0e-01 (med 3.0e-01) v 7.1e-01 (med 6.3e-01)
+isacnet  SNR   0.0 BER 2.88e-01 SER 7.60e-01 NMSE r 2.8e-01 (med 2.6e-01) v 7.2e-01 (med 5.7e-01)
+isacnet  SNR   5.0 BER 1.78e-01 SER 5.73e-01 NMSE r 2.8e-01 (med 2.5e-01) v 6.5e-01 (med 5.4e-01)
+isacnet  SNR  10.0 BER 7.35e-02 SER 2.71e-01 NMSE r 2.6e-01 (med 2.5e-01) v 6.0e-01 (med 5.1e-01)
+isacnet  SNR  15.0 BER 1.95e-02 SER 7.59e-02 NMSE r 2.8e-01 (med 2.6e-01) v 6.4e-01 (med 6.1e-01)
+isacnet  SNR  20.0 BER 5.27e-03 SER 2.05e-02 NMSE r 2.5e-01 (med 2.7e-01) v 5.8e-01 (med 5.8e-01)
+isacnet  SNR  25.0 BER 5.74e-03 SER 2.21e-02 NMSE r 2.9e-01 (med 2.9e-01) v 6.0e-01 (med 5.6e-01)
+done
