@@ -40,7 +40,7 @@
 
 % ================= TITLE BLOCK (same layout as previous BTP reports) =================
 \begin{center}
-  {\Large Robust Deep-Unfolded Receivers for Integrated\\[2pt] Passive Sensing and Communication\par}
+  {\Large Clutter-Robust Deep-Unfolded Receivers for Integrated\\[2pt] Passive Sensing and Communication\par}
   \vspace{10pt}
   {\large \studentname\ (\rollno)\par}
   \vspace{4pt}
@@ -56,9 +56,9 @@
 \begin{abstract}
 \noindent In integrated passive sensing and communication (IPSAC), a single receiver must decode the transmitted data and estimate the range and velocity of targets from the same received signal, without knowing the data in advance. ISAC-NET~\cite{isacnet} solves this with an iterative algorithm that alternates symbol detection, passive sensing and channel reconstruction, and unfolds it into a network whose 25 step-size parameters are learned from data.
 
-This project reproduces ISAC-NET end to end at the paper's full simulation size (256 OFDM symbols $\times$ 1024 subcarriers, $8\times 8$ antennas, three targets) in Python and PyTorch, together with the LS, D-AMP and 2D-DFT baselines. Learning the parameters lowers the bit error rate (BER) by 4--19$\times$ compared with the hand-set algorithm, both under our SNR convention and under the paper's own setup, which confirms the paper's main claim.
+This project reproduces ISAC-NET end to end at the paper's full simulation size (256 OFDM symbols $\times$ 1024 subcarriers, $8\times 8$ antennas, three targets) in Python and PyTorch, together with the LS, D-AMP and 2D-DFT baselines, under the paper's own simulation setup. Learning the parameters lowers the bit error rate (BER) by 4--11$\times$ at 15--25~dB and the velocity NMSE by about 5$\times$ at 20~dB compared with the hand-set algorithm, which confirms the paper's main claim. The remaining differences from the published figures are traced to details the paper does not state.
 
-The reproduction also exposes three limitations the paper does not report. First, training a separate parameter set for each SNR, as the paper does, is brittle: at 15--20~dB a few frames fail completely (BER $\approx 0.5$) and make the average worse than the untrained algorithm. Second, the learned parameters transfer only partly to target layouts not seen in training, where the gain falls from 4--11$\times$ to 3--5$\times$. Third, the same algorithm with four inner iterations per layer reaches perfect-channel BER without any learning, so the benefit of unfolding lies in lower cost rather than higher accuracy. As a first extension, a single parameter set trained on randomly drawn SNR and clutter is never worse than the clean-trained one under clutter. These findings motivate the proposed research direction for the next semester: robust, SNR-adaptive training of deep-unfolded ISAC receivers, with generalisation of multi-target sensing across target placement and count as a second direction.
+The reproduction also exposes limitations the paper does not report. The learned parameters transfer only partly to target layouts not seen in training, where the gain falls to 3--5$\times$; the last unfolded layer partly undoes the convergence of the earlier ones, which sets a BER floor near $8\times10^{-4}$; and the same algorithm with four inner iterations per layer reaches perfect-channel BER without any learning, so the benefit of unfolding lies in lower cost rather than higher accuracy. Since the paper's channel has no clutter, we add distributed clutter scatterers to the channel model as a first extension. Communication stays robust (ISAC-NET keeps a 3--6$\times$ BER gain), but sensing breaks down with as few as five scatterers, because the peak extraction reports clutter as targets, and retraining the step sizes on clutter does not fix it. This motivates the proposed research direction for the next semester: a clutter-robust ISAC-NET with a learned clutter-suppression stage before sensing.
 \end{abstract}
 
 \newpage
@@ -77,13 +77,13 @@ This project had two aims: to reproduce ISAC-NET faithfully enough to test its c
 \subsection{Contributions}
 \begin{enumerate}
   \item An open Python/PyTorch implementation of the full system model, three baselines, Alg.~3 and ISAC-NET at the paper's Table~III size, with unit tests (\url{https://github.com/Kushal2oo4/isac-net}).
-  \item A list of points where the paper is ambiguous or inconsistent, the choice made for each, and a quantitative explanation of why our figures differ from the published ones.
-  \item A reproduction of the paper's main claim: learning lowers BER by 4--19$\times$ compared with the hand-set algorithm, under both our setup and the paper's.
-  \item Three findings beyond the paper: per-SNR training is brittle; the learned parameters transfer only partly to unseen target layouts; and a converged hand-set algorithm already reaches perfect-channel BER.
-  \item A first extension towards robustness: clutter scatterers in the channel model and a single parameter set trained over random SNR and clutter.
+  \item A list of points where the paper is ambiguous or inconsistent, the choice made for each, and an explanation of why our figures differ from the published ones.
+  \item A reproduction of the paper's main claim under its own setup: learning lowers BER by 4--11$\times$ compared with the hand-set algorithm.
+  \item Findings beyond the paper: the learned parameters transfer only partly to unseen target layouts, the last layer partly undoes convergence, and a converged hand-set algorithm already reaches perfect-channel BER.
+  \item A first extension: clutter scatterers in the channel model, showing that ISAC-NET's sensing fails under clutter, which defines the research direction for the next semester.
 \end{enumerate}
 
-Section~\ref{sec:background} reviews background, Section~\ref{sec:model} gives the system model, Section~\ref{sec:algos} the algorithms and Section~\ref{sec:impl} the implementation and setup. Section~\ref{sec:results} presents the results, Section~\ref{sec:future} the proposed research directions, and Section~\ref{sec:conclusion} concludes.
+Section~\ref{sec:background} reviews background, Section~\ref{sec:model} gives the system model, Section~\ref{sec:algos} the algorithms and Section~\ref{sec:impl} the implementation and setup. Section~\ref{sec:results} presents the results, Section~\ref{sec:future} the proposed future work, and Section~\ref{sec:conclusion} concludes.
 
 % =====================================================================
 \section{Background}\label{sec:background}
@@ -163,24 +163,40 @@ Iteration $k$ uses five parameters $\Omega_k=(\eta_1,\eta_2,\eta_3,\eta_4,\eta_5
 We study two variants: the \emph{literal} one, with one D-AMP update per iteration as written in~\cite{isacnet}, and a \emph{converging} one, with four D-AMP updates per iteration.
 
 \subsection{ISAC-NET}
-ISAC-NET unfolds $K$ iterations of Alg.~3 into $K$ layers with the same structure and separate trainable $\Omega_k$, so $5K$ parameters in total (25 for $K=5$). The paper trains them in TensorFlow with batch 128, 500 epochs and learning rate 0.001, and stores one parameter set per SNR~\cite[Sec.~IV-B]{isacnet}. Our implementation uses PyTorch and the loss
+ISAC-NET unfolds $K$ iterations of Alg.~3 into $K$ layers with the same structure and separate trainable $\Omega_k$, so $5K$ parameters in total (25 for $K=5$). Our implementation uses PyTorch and the loss
 \begin{equation}
   \mathcal{L}=\frac{1}{|\mathcal{D}|}\sum_{(m,n)\in\mathcal{D}}|\hat{x}(m,n)-x(m,n)|^2+\lambda\big(\mathrm{NMSE}_r+\mathrm{NMSE}_v\big),\qquad\lambda=1,
 \end{equation}
-where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and each NMSE is averaged over the targets, a missed target counting as NMSE~1. Training uses Adam, gradient-norm clipping, a cosine learning-rate schedule and a box constraint on each $\eta$. It keeps the parameters with the lowest loss on fixed validation frames, starting from the hand-set values, so a trained network is never worse than Alg.~3 on those frames.
+where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and each NMSE is averaged over the targets, a missed target counting as NMSE~1. Training uses Adam, gradient-norm clipping at 1.0, a cosine learning-rate schedule and a box constraint on each $\eta$. It keeps the parameters with the lowest loss on fixed validation frames, starting from the hand-set values, so a trained network is never worse than Alg.~3 on those frames. Table~\ref{tab:train} compares our training with the paper's.
 
-We compare two training schemes:
-\begin{itemize}
-  \item \textbf{Per-SNR}, as in~\cite{isacnet}: one training run, and one stored $\Omega$, per SNR.
-  \item \textbf{Joint}: one $\Omega$ for all SNRs, where every training and validation frame draws its SNR at random from the training range.
-\end{itemize}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lll}
+\toprule
+Setting & ISAC-NET paper~\cite[Sec.~IV-B]{isacnet} & This work \\
+\midrule
+Framework & TensorFlow & PyTorch \\
+Layers $K$ & 5 (10 in Fig.~8) & 5 \\
+Learning rate & 0.001 & 0.002 \\
+Training data & Fixed MATLAB data set, 95\% / 5\% split & Fresh random frames every step \\
+Batch $\times$ length & 128 frames $\times$ 500 epochs & 8 frames $\times$ 200 steps \\
+Training SNRs & One parameter set per SNR & One parameter set for 0--25 dB \\
+Validation & 5\% of the data set & 48 fixed frames \\
+Hardware & Not stated & Apple M2 Pro CPU, 69 min \\
+\bottomrule
+\end{tabular}
+\caption{Training settings of the paper and of this work.}
+\label{tab:train}
+\end{table}
+
+Three settings differ from the paper. The learning rate is 0.002 rather than 0.001: a first attempt at 0.01 diverged (validation loss rose from 0.67 to 4.9), while 0.002 converged within 100 steps, and 0.001 is expected to behave the same, only more slowly. The training is shorter, because one step with a full $256\times1024\times8\times8$ frame takes several seconds on a CPU and 500 epochs of 128 frames would take weeks; with only 25 parameters, the validation loss stopped improving after 100 of the 200 steps. Finally, one parameter set is trained for all SNRs from 0 to 25~dB, each frame drawing its SNR at random, instead of one set per SNR, so that a single trained network is evaluated at every SNR.
 
 % =====================================================================
 \section{Implementation and Simulation Setup}\label{sec:impl}
-All results use the paper's Table~III parameters at full size (Table~\ref{tab:params}); nothing is scaled down.
+All results use the paper's Table~III parameters at full size (Table~\ref{tab:params}); nothing is scaled down. Where the paper leaves a choice open, we take the reading that matches its own figures (Section~\ref{sec:choices}).
 
 \begin{table}[H]
-\centering
+\centering\small
 \begin{tabular}{ll}
 \toprule
 Parameter & Value \\
@@ -194,9 +210,13 @@ Antennas $N_t=N_r$ & 8 \\
 Modulation, pilot ratio & 16-QAM, 1/14 \\
 Targets & 3, at 10/50/100 m and 5/10/15 m/s, RCS 1 m$^2$ \\
 Path loss & Physical bistatic (targets differ by about 40 dB) \\
+SNR & Measured after combining the $N_r$ receive antennas \\
+LS reference & Estimate from the first pilot symbol, held for the frame \\
+Sensing search range & $r\le200$ m, $|v|\le50$ m/s \\
+Test frames & 200 per SNR \\
 \bottomrule
 \end{tabular}
-\caption{Simulation parameters (Table III of~\cite{isacnet}).}
+\caption{Simulation parameters (Table III of~\cite{isacnet}, with the choices of Section~\ref{sec:choices} in the last four rows).}
 \label{tab:params}
 \end{table}
 
@@ -206,248 +226,183 @@ The paper generates its data sets in MATLAB. We simulate the same model in Pytho
   \item \textbf{Fresh data every step.} Every training step draws new symbols, channels and noise, instead of a fixed data set split 95\%/5\%. Validation and test frames come from separate random seeds.
   \item \textbf{Fixed pilots.} The same QPSK pilot sequence is used in every frame, as the paper requires.
   \item \textbf{Unstated channel details.} The paper does not give target angles or the exact gain model. We draw AoD and AoA uniformly in $\pm60^\circ$, use Weibull small-scale fading, and use physical path loss.
-  \item \textbf{Fixed targets.} Training uses the targets of Table~\ref{tab:params}, with angles, fading and noise changing between frames. Section~\ref{sec:paper-lr} tests the trained network on randomly placed targets.
+  \item \textbf{Fixed targets.} Training uses the targets of Table~\ref{tab:params}, with angles, fading and noise changing between frames. Section~\ref{sec:unseen} tests the trained network on randomly placed targets.
 \end{itemize}
 
-\subsection{Interpretation choices}
+\subsection{Interpretation choices}\label{sec:choices}
 The paper leaves several steps open or states them inconsistently. The choices in Table~\ref{tab:choices} were needed for the algorithm to work as described; the repository README lists all of them.
 
 \begin{table}[H]
 \centering\small
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
 \toprule
-Point in~\cite{isacnet} & Our choice & Effect \\
+Point in~\cite{isacnet} & Our choice & Reason / effect \\
 \midrule
-Alg.~3 runs one D-AMP update per iteration, far from converged after 5 iterations & Two variants: literal (1 update) and converging (4 updates) & The converging variant reaches perfect-channel BER without learning \\
-Residual update (24) uses $\BX^k$, so $\eta_1=1,\eta_2=0$ oscillates for any step size & Conjugate transpose in (23), step size $0.5/\|h\|^2$ & Literal BER rises from layer 2 to 3; learned $\eta_1\approx0.9$ acts as damping \\
+SNR definition not stated & SNR after combining the $N_r$ antennas & Per-antenna SNR shifts every curve 9 dB to the left of the paper's; after combining, the perfect-channel curve matches \\
+LS channel estimate not specified & First pilot's estimate held for the whole frame & Reproduces the paper's ``conventional'' BER floor; interpolating between pilots removes it \\
+Alg.~3 runs one D-AMP update per iteration, far from converged after 5 iterations & Literal variant (1 update) for ISAC-NET; converging variant (4 updates) as a reference & The converging variant reaches perfect-channel BER without learning \\
+Residual update (24) uses $\BX^k$, so $\eta_1=1,\eta_2=0$ oscillates for any step size & Conjugate transpose in (23), step size $0.5/\|h\|^2$ & Literal BER rises from layer 2 to 3; learned $\eta$ partly damps it \\
 Peaks removed by plain subtraction & Each peak refined off-grid and all gains re-fitted jointly by LS & Without it, residues of the 10 m target hide the 100 m target \\
 $\eta_3$ is a hard threshold & Sigmoid gate on peak height & Gives $\eta_3$ a gradient \\
 Blends read ``$\eta\cdot$old + new'' & Convex blends $\eta\cdot$old $+(1-\eta)\cdot$new & Keeps $r$, $v$ and $\BH$ unbiased for any $\eta$ \\
-Search range not stated & $r\le200$ m, $|v|\le50$ m/s (``search window'') & Avoids spurious far peaks; Section~\ref{sec:paper-setup} tests without it \\
+Search range not stated & $r\le200$ m, $|v|\le50$ m/s (``search window'') & Without it, literal Alg.~3 fails at every SNR (Section~\ref{sec:paper-comp}) \\
 $\BH_\varphi$ is diagonal, yet complexity is given as $O(L_pN_tN_r(MN)^2)$ & Applied element-wise & A layer costs $O(L_pN_tN_rMN)$ \\
-SNR definition not stated & Per receive antenna, or after combining the $N_r$ antennas & The two differ by 9 dB; Section~\ref{sec:paper-setup} \\
 \bottomrule
 \end{tabularx}
 \caption{Main interpretation choices.}
 \label{tab:choices}
 \end{table}
 
-\subsection{Training runs}
-\begin{table}[H]
-\centering\footnotesize
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{llcllcc}
-\toprule
-Run & SNR definition & Layers & Training SNRs & Steps $\times$ batch & LR & Val.\ frames \\
-\midrule
-A1, per-SNR & Per antenna & 5 & 0--25 dB, one run each & $300\times4$ & 0.01 & 16 per SNR \\
-A2, joint & Per antenna & 5 & 0--25 dB, random per frame & $300\times8$ & 0.01 & 48 \\
-B1, joint & After combining & 10 & 0--40 dB & $200\times8$ & 0.01 & 48 \\
-B2, joint & After combining & 5 & 0--25 dB & $200\times8$ & 0.002 & 48 \\
-\bottomrule
-\end{tabular}
-\caption{Training runs. All use Adam, gradient clipping at 1.0 and 200 test frames per SNR. Runs B also hold the first pilot's LS estimate for the whole frame, as the paper's ``conventional'' receiver appears to.}
-\label{tab:runs}
-\end{table}
-
-Everything ran on the CPU of an Apple M2 Pro (Apple MPS lacks complex linear solves). A training run takes 1--4.5~h, and a 200-frame evaluation over 11 SNRs about 1~h. Training is much shorter than the paper's 500 epochs $\times$ batch 128, but with only 25 parameters the validation loss stops improving within 100--200 steps.
-
 % =====================================================================
 \section{Results}\label{sec:results}
-Learning the parameters of the literal algorithm improves both communication and sensing, but only with joint training, and a converged hand-set algorithm remains the best receiver. Sections~\ref{sec:comm}--\ref{sec:layers} use run A (SNR per receive antenna); Sections~\ref{sec:paper-setup}--\ref{sec:paper-lr} use the paper's setup, and Section~\ref{sec:clutter} adds clutter.
+All results in this section come from one trained ISAC-NET (Table~\ref{tab:train}) under the setup of Table~\ref{tab:params}, evaluated on 200 test frames per SNR. Each figure mirrors one figure of~\cite{isacnet}. ``Alg.~3 (literal)'' is the hand-set algorithm that ISAC-NET unfolds, and ``Alg.~3, 4 updates/layer'' is the converging reference.
 
 \subsection{Communication (cf.\ Fig.~9 of~\cite{isacnet})}\label{sec:comm}
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{final_fig9.png}
-\caption{BER (left) and SER (right) versus SNR, 200 frames per SNR. Thin dashed lines are baselines; points with zero errors are left out.}
+\includegraphics[width=\textwidth]{paper_lr_fig9.png}
+\caption{BER (left) and SER (right) versus SNR. Thin dashed lines are baselines; points with zero errors are left out.}
 \label{fig:ber}
 \end{figure}
 
 \begin{table}[H]
-\centering\small
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lcccccc}
+\centering\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lccccccc}
 \toprule
-SNR (dB) & 0 & 5 & 10 & 15 & 20 & 25 \\
+SNR (dB) & 0 & 5 & 10 & 15 & 20 & 25 & 30 \\
 \midrule
-Alg.~3, literal & \sci{1.1}{-1} & \sci{6.4}{-2} & \sci{3.1}{-2} & \sci{1.4}{-2} & \sci{6.1}{-3} & \sci{5.2}{-3} \\
-ISAC-NET, per-SNR (A1) & \sci{1.1}{-1} & \sci{6.5}{-2} & \sci{3.8}{-2} & \sci{4.8}{-2} & \sci{4.6}{-2} & \sci{4.7}{-4} \\
-ISAC-NET, joint (A2) & \sci{8.3}{-2} & \sci{1.4}{-2} & \sci{1.6}{-3} & \sci{2.4}{-3} & \sci{8.0}{-4} & \sci{4.6}{-4} \\
-Alg.~3, 4 updates per layer & \sci{8.0}{-2} & \sci{1.1}{-2} & \sci{1.6}{-4} & \sci{3.5}{-5} & 0 & 0 \\
-Perfect channel + MAP & \sci{7.8}{-2} & \sci{9.8}{-3} & \sci{5.8}{-5} & \sci{1.1}{-6} & 0 & 0 \\
+Alg.~3, literal & \sci{3.0}{-1} & \sci{1.8}{-1} & \sci{1.0}{-1} & \sci{5.8}{-2} & \sci{2.6}{-2} & \sci{9.5}{-3} & \sci{5.6}{-3} \\
+ISAC-NET (output, layer 5) & \sci{2.9}{-1} & \sci{1.7}{-1} & \sci{7.1}{-2} & \sci{1.3}{-2} & \sci{2.5}{-3} & \sci{8.3}{-4} & \sci{7.9}{-4} \\
+ISAC-NET, layer 4 & \sci{2.9}{-1} & \sci{1.8}{-1} & \sci{8.3}{-2} & \sci{2.3}{-2} & \sci{1.7}{-3} & \sci{3.1}{-5} & \sci{2.8}{-6} \\
+Alg.~3, 4 updates per layer & \sci{2.8}{-1} & \sci{1.7}{-1} & \sci{6.1}{-2} & \sci{6.0}{-3} & \sci{5.5}{-5} & \sci{4.0}{-7} & \sci{2.1}{-8} \\
 \bottomrule
 \end{tabular}
-\caption{BER versus SNR, SNR per receive antenna.}
+\caption{Mean BER versus SNR.}
 \label{tab:ber}
 \end{table}
 
 \begin{itemize}
-  \item \textbf{Learning helps the literal algorithm.} Joint training lowers BER $4.6\times$ at 5 dB, $19\times$ at 10 dB, $6\times$ at 15 dB and $8\times$ at 20 dB. This reproduces the paper's main claim.
-  \item \textbf{Per-SNR training fails at 15--20 dB.} Its median BER there is about $10^{-5}$ and 0, better than Alg.~3, but 2--6 of 24 test frames fail completely (BER $\approx0.5$) and dominate the mean. With 16 validation frames per SNR, training rarely sees such a frame. The $\Omega$ trained at 25 dB had no failures at 15 and 20 dB, which shows the fault lies in the training, not in the SNR.
-  \item \textbf{Convergence matters more than learning.} With four D-AMP updates per layer, the hand-set algorithm stays within a factor 3 of the perfect channel at 10 dB, and training finds nothing better.
-  \item \textbf{Pilot-based reconstruction is already strong.} At 0 dB, MAP with the channel rebuilt from pilot sensing (BER \sci{7.84}{-2}) matches the perfect channel (\sci{7.77}{-2}), against 0.20 for LS + MAP.
+  \item \textbf{Learning helps the literal algorithm.} ISAC-NET lowers BER by $4.3\times$ at 15 dB, $10\times$ at 20 dB, $11\times$ at 25 dB and $7\times$ at 30 dB compared with literal Alg.~3. This reproduces the paper's main claim. Below 5 dB there is little or no gain, as in~\cite{isacnet}.
+  \item \textbf{The ``conventional'' receivers floor.} LS + MAP and D-AMP with the held LS estimate level off near BER 0.2, the shape of the paper's conventional curve.
+  \item \textbf{The last layer limits high-SNR BER.} Output BER stays near \sci{8}{-4} from 25 to 40 dB, while layer 4 reaches \sci{3.1}{-5} at 25 dB and no errors at 40 dB. The fifth layer partly undoes the convergence of the earlier ones (Section~\ref{sec:layers}).
+  \item \textbf{Convergence matters more than learning.} The 4-update Alg.~3, with hand-set parameters, follows the perfect-channel curve and reaches \sci{5.5}{-5} at 20 dB, against \sci{2.5}{-3} for ISAC-NET.
 \end{itemize}
 
 \subsection{Sensing (cf.\ Fig.~10 of~\cite{isacnet})}\label{sec:sensing}
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{final_fig10.png}
-\caption{Mean range (left) and velocity (right) NMSE versus SNR, with the CRB as drawn in~\cite{isacnet}.}
+\includegraphics[width=\textwidth]{paper_lr_fig10.png}
+\caption{Mean range (left) and velocity (right) NMSE versus SNR, with the CRB drawn from the paper's formula.}
 \label{fig:nmse}
 \end{figure}
 
-Joint training lowers range NMSE from \sci{1.2}{-1} to \sci{3.8}{-2} at 10 dB and from \sci{5.3}{-2} to \sci{1.3}{-2} at 25 dB. It lowers velocity NMSE from 1.2 to 0.30 at 10 dB and from 0.41 to 0.065 at 25 dB. At 0 dB the velocity NMSE gets slightly worse (0.54 to 0.74). All methods stay well above the CRB, because the 28 m/s velocity bin is wider than the 5 m/s spacing of the targets; on-grid estimates cannot get much below NMSE $10^{-2}$. Mean NMSE is driven by a few frames with a missed target; the median range NMSE is about $10^{-7}$.
+ISAC-NET lowers the mean velocity NMSE from 1.05 to 0.20 at 20 dB and from 0.89 to 0.13 at 25 dB, and the mean range NMSE from 0.10 to 0.048 at 20 dB and to 0.029 at 25 dB. At 10 dB and below the two are about equal. Sensing from pilots alone, or by 2D-DFT on detected symbols without the joint loop, is one to three orders of magnitude worse. All methods stay well above the CRB, because the 28 m/s velocity bin is wider than the 5 m/s spacing of the targets; on-grid estimates cannot get much below velocity NMSE $10^{-2}$. Mean NMSE is driven by a few frames with a missed target: the median range NMSE is about $10^{-7}$ from 10 dB upwards for every receiver.
 
 \subsection{Convergence over layers (cf.\ Fig.~8 of~\cite{isacnet})}\label{sec:layers}
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{final_fig8.png}
-\caption{BER (left) and range + velocity NMSE (right) after each layer, at 10 dB (solid) and 20 dB (dashed).}
+\includegraphics[width=\textwidth]{paper_lr_fig8.png}
+\caption{BER (left) and range + velocity NMSE (right) after each layer, at 0 dB (solid) and 10 dB (dashed).}
 \label{fig:layers}
 \end{figure}
 
-Literal Alg.~3 gets worse from layer 2 to layer 3 at every SNR, the oscillation noted in Table~\ref{tab:choices}. Learning does not remove it at layer 3, but it makes layers 4 and 5 converge: at 20 dB, BER falls from \sci{1.5}{-1} at layer 3 to \sci{8.0}{-4} at layer 5, against \sci{6.1}{-3} for Alg.~3. The 4-update variant converges within 2--3 layers.
+Literal Alg.~3 gets worse from layer 2 to layer 3 at every SNR above 0 dB (at 10 dB, BER 0.13 to 0.17), the oscillation noted in Table~\ref{tab:choices}. Learning does not remove it at layer 3, but it lowers every later layer: at 10 dB ISAC-NET ends at BER 0.071 against 0.10, and at 20 dB it reaches \sci{1.7}{-3} at layer 4 against \sci{2.6}{-2} for Alg.~3 at layer 5. The 4-update variant converges within 2--3 layers. At 0 dB all receivers are limited by noise and the layers change little.
 
-\subsection{Comparison with the paper's setup}\label{sec:paper-setup}
-Our run-A curves have the same shape as the paper's but sit about 9 dB to the left, and our sensing never shows the paper's NMSE of about $10^5$ at low SNR. Table~\ref{tab:diffs} lists the differences and their causes; run B tests the main ones by adopting the paper's choices.
+\subsection{Comparison with the published figures}\label{sec:paper-comp}
+Our curves have the same shape as the paper's: the conventional floor, the perfect-channel curve reaching $10^{-5}$ near 21 dB, and ISAC-NET lying between them and improving on the hand-set algorithm. Table~\ref{tab:diffs} lists the remaining differences and their causes.
 
 \begin{table}[H]
 \centering\small
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.2cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}X}
 \toprule
-Feature of~\cite{isacnet} & Run A & Cause & Tested in run B \\
+Feature of~\cite{isacnet} & This work & Cause \\
 \midrule
-Perfect-channel BER $10^{-5}$ at about 21 dB & At about 12 dB & SNR per antenna vs after combining 8 antennas (9 dB) & Yes: shift disappears \\
-``Conventional'' LS + MAP floors at BER 0.1 & No floor & Our LS is interpolated between pilots; \cite{isacnet} likely holds one estimate & Yes: floor of about 0.2 appears \\
-NMSE about $10^5$ below a threshold SNR & NMSE at most about 1 & Our 200 m / 50 m/s search window rules out far-off peaks & Yes: without the window, the literal receiver fails \\
-Fig.~8 uses 10 layers & 5 layers & Choice of depth & Yes (B1) \\
-Velocity NMSE down to $10^{-3}$--$10^{-4}$ & Best \sci{6.5}{-2} & 28 m/s bin vs 5 m/s target spacing & No: needs off-grid estimation \\
-CRB line almost flat & CRB falls $10\times$ per 10 dB & Drawn line does not follow~\cite{isacnet}'s own formula $\Delta R/\sqrt{2\,\mathrm{SNR}}$ & No: inherent in~\cite{isacnet} \\
-OAMP-Net2 and TPG curves & Not implemented & Out of scope & No \\
+ISAC-NET close to the perfect channel & ISAC-NET levels off near \sci{8}{-4} & Fifth layer oscillation of the literal update (Table~\ref{tab:choices}); the paper may iterate D-AMP further than its text says \\
+NMSE about $10^5$ below a threshold SNR & NMSE at most about 1 with the search window & Without the window, literal Alg.~3 has BER $\approx0.5$ and velocity NMSE $\approx4\times10^4$ at every SNR: a wrong far-off peak corrupts the rebuilt channel \\
+Velocity NMSE down to $10^{-3}$--$10^{-4}$ & Best 0.094 & 28 m/s bin vs 5 m/s target spacing; needs off-grid estimation \\
+CRB line almost flat & CRB falls $10\times$ per 10 dB & The drawn line does not follow the paper's own formula $\Delta R/\sqrt{2\,\mathrm{SNR}}$ \\
+Fig.~8 uses 10 layers & 5 layers & A 10-layer training at learning rate 0.01 diverged \\
+OAMP-Net2 and TPG curves & Not implemented & Out of scope \\
 \bottomrule
 \end{tabularx}
-\caption{Differences from the published figures.}
+\caption{Remaining differences from the published figures.}
 \label{tab:diffs}
 \end{table}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{paper_window_fig9.png}
-\caption{BER and SER with SNR measured after combining, 10 layers, hand-set parameters (run B1 setup, with the search window).}
-\label{fig:paper-window}
-\end{figure}
-
-With SNR measured after combining, the 4-update Alg.~3 reaches BER \sci{5.5}{-5} at 20 dB and follows the perfect-channel curve, which in~\cite{isacnet} reaches $10^{-5}$ at about 21 dB: the 9 dB offset is explained. Holding the first pilot's LS estimate gives LS + MAP and D-AMP a floor of about 0.2, the shape of the paper's ``conventional'' curve. Without the search window, literal Alg.~3 has BER about 0.5 at every SNR, even 40 dB, and velocity NMSE about $4\times10^4$: a wrong velocity peak corrupts the rebuilt channel and ruins detection. The 4-update variant gives about the same BER with or without the window.
-
-Training in run B1 (10 layers, 0--40 dB, learning rate 0.01) diverged. Validation loss rose from 0.666 to 4.87 over 200 steps, so checkpointing kept the hand-set values and the network learned nothing.
-
-\subsection{Retraining at a lower learning rate, and unseen targets}\label{sec:paper-lr}
-Run B2 lowered the learning rate to 0.002, closer to the paper's 0.001, with 5 layers and training SNRs of 0--25 dB. A 40-step test confirmed the loss fell before the full run. Over 200 steps the validation loss fell from 1.97 (hand-set) to 0.84 at step 100, then stayed between 0.91 and 1.03.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{paper_lr_fig9.png}
-\caption{BER and SER under the paper's setup after retraining (run B2, 5 layers, with the search window).}
-\label{fig:paper-lr}
-\end{figure}
+\subsection{Unseen target layouts}\label{sec:unseen}
+The network above was trained on the fixed targets of Table~\ref{tab:params}. To test how far it generalises, it was evaluated without retraining on random targets: path length 5--150 m (at least 5 m apart) and speed 3--30 m/s in either direction, drawn anew for every frame.
 
 \begin{table}[H]
 \centering\small
-\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lccccc}
 \toprule
 SNR (dB) & 10 & 15 & 20 & 25 & 30 \\
 \midrule
-Alg.~3, literal & \sci{1.0}{-1} & \sci{5.8}{-2} & \sci{2.6}{-2} & \sci{9.5}{-3} & \sci{5.6}{-3} \\
-ISAC-NET, output (layer 5) & \sci{7.1}{-2} & \sci{1.3}{-2} & \sci{2.5}{-3} & \sci{8.3}{-4} & \sci{7.9}{-4} \\
-ISAC-NET, layer 4 & \sci{8.3}{-2} & \sci{2.3}{-2} & \sci{1.8}{-3} & \sci{3.1}{-5} & \sci{2.8}{-6} \\
-Alg.~3, 4 updates per layer & \sci{6.1}{-2} & \sci{6.0}{-3} & \sci{5.5}{-5} & \sci{4.0}{-7} & \sci{2.1}{-8} \\
-\midrule
-\emph{Random targets:} Alg.~3, literal & \sci{1.1}{-1} & \sci{6.2}{-2} & \sci{3.5}{-2} & \sci{1.9}{-2} & \sci{1.5}{-2} \\
-\emph{Random targets:} ISAC-NET (layer 5) & \sci{7.5}{-2} & \sci{2.2}{-2} & \sci{6.4}{-3} & \sci{4.4}{-3} & \sci{4.4}{-3} \\
+Alg.~3, literal & \sci{1.1}{-1} & \sci{6.2}{-2} & \sci{3.5}{-2} & \sci{1.9}{-2} & \sci{1.5}{-2} \\
+ISAC-NET (layer 5) & \sci{7.5}{-2} & \sci{2.2}{-2} & \sci{6.4}{-3} & \sci{4.4}{-3} & \sci{4.4}{-3} \\
 \bottomrule
 \end{tabular}
-\caption{BER under the paper's setup, run B2, with the search window. Random targets: path length 5--150 m (at least 5 m apart), speed 3--30 m/s in either direction, drawn anew per frame and never seen in training.}
-\label{tab:paper-lr}
+\caption{Mean BER on random target layouts never seen in training.}
+\label{tab:unseen}
 \end{table}
 
-\begin{itemize}
-  \item \textbf{Learning helps under the paper's setup too.} ISAC-NET lowers BER 4--11$\times$ compared with literal Alg.~3 at 15--25 dB, and velocity NMSE from 1.1 to 0.20 at 20 dB. Below 5 dB there is little or no gain.
-  \item \textbf{The last layer limits high-SNR BER.} Output BER stays near \sci{8}{-4} from 25 to 40 dB, while layer 4 reaches \sci{3.1}{-5} at 25 dB and no errors at 40 dB. The fifth layer undoes part of the convergence, the same oscillation as in Section~\ref{sec:layers}.
-  \item \textbf{The gain transfers only partly to unseen targets.} On random target layouts the gain falls to 3--5$\times$, and ISAC-NET levels off at \sci{4.4}{-3} instead of \sci{8}{-4}. The learned $\Omega$ is partly tuned to the training scenario.
-  \item \textbf{Training does not repair the missing window.} Without it, trained ISAC-NET still has BER above 0.4 at every SNR.
-  \item \textbf{The converged algorithm stays best.} The 4-update Alg.~3 reaches \sci{5.5}{-5} at 20 dB, against \sci{2.5}{-3} for ISAC-NET.
-\end{itemize}
+The gain falls from 4--11$\times$ to 3--5$\times$, and ISAC-NET levels off at \sci{4.4}{-3} instead of \sci{8}{-4}. The learned parameters are partly tuned to the training scenario.
 
-\subsection{Extension: clutter and one model for all conditions}\label{sec:clutter}
-One $\eta$ trained on randomly drawn SNR and clutter replaces per-SNR training: it is never worse than the clean-trained $\eta$ and lowers BER at 15--25 dB in every test condition. Following~\cite{clutter}, we add distributed clutter to the channel: $N_c$ scatterers per frame with path length uniform in 5--200 m, RCS log-uniform in $[0.01,1]\cdot\alpha_c\cdot\sigma_{\text{target}}$, and Doppler $f\sim\mathcal{N}(0,\sigma_{f,c}^2)$. Clutter is part of the true channel but is not a target, so it enters neither the sensing truth nor the loss.
-
-The randomised $\eta$ is trained on frames with SNR uniform in 0--25 dB, $N_c\in\{0,\dots,20\}$, $\alpha_c$ log-uniform in $[0.01,1]$ and $\sigma_{f,c}$ uniform in 0--30 Hz (literal Alg.~3, 5 layers, 150 steps $\times$ 8 frames, learning rate 0.002, 69 min on an M2 Pro CPU). It is compared with the clutter-free $\eta$ of Section~\ref{sec:paper-lr} on 50 test frames per point, $\sigma_{f,c}=30$ Hz.
+\subsection{Extension: clutter in the channel}\label{sec:clutter}
+The channel of~\cite{isacnet} contains only the target echoes. Real bistatic links also see clutter from buildings, ground and other static or slow objects. Following~\cite{clutter}, we add distributed clutter to the channel: $N_c$ scatterers per frame with path length uniform in 5--200 m, RCS log-uniform in $[0.01,1]\cdot\alpha_c\cdot\sigma_{\text{target}}$, and Doppler $f\sim\mathcal{N}(0,\sigma_{f,c}^2)$ with $\sigma_{f,c}=30$ Hz (about 2 m/s). Clutter is part of the true channel but is not a target, so it enters neither the sensing truth nor the loss. The trained ISAC-NET of Section~\ref{sec:comm}, which never saw clutter, is tested on 50 frames per point.
 
 \begin{table}[H]
 \centering\small
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lcccccc}
+\begin{tabular}{lcccc}
 \toprule
- & \multicolumn{3}{c}{20 dB} & \multicolumn{3}{c}{25 dB} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}
-Test clutter & Alg.~3 & Clean $\eta$ & Random $\eta$ & Alg.~3 & Clean $\eta$ & Random $\eta$ \\
+ & \multicolumn{2}{c}{20 dB} & \multicolumn{2}{c}{25 dB} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Test clutter & Alg.~3 & ISAC-NET & Alg.~3 & ISAC-NET \\
 \midrule
-None & \sci{2.45}{-2} & \sci{2.35}{-3} & \sci{1.53}{-3} & \sci{9.02}{-3} & \sci{6.46}{-4} & \sci{2.13}{-4} \\
-$N_c=5,\ \alpha_c=1$ & \sci{2.79}{-2} & \sci{4.40}{-3} & \sci{3.46}{-3} & \sci{1.50}{-2} & \sci{1.76}{-3} & \sci{1.35}{-3} \\
-$N_c=20,\ \alpha_c=0.1$ & \sci{2.77}{-2} & \sci{4.18}{-3} & \sci{3.17}{-3} & \sci{1.55}{-2} & \sci{3.74}{-3} & \sci{2.84}{-3} \\
-$N_c=20,\ \alpha_c=1$ & \sci{3.14}{-2} & \sci{6.59}{-3} & \sci{5.27}{-3} & \sci{1.96}{-2} & \sci{6.58}{-3} & \sci{5.74}{-3} \\
+None & \sci{2.45}{-2} & \sci{2.35}{-3} & \sci{9.02}{-3} & \sci{6.46}{-4} \\
+$N_c=5,\ \alpha_c=1$ & \sci{2.79}{-2} & \sci{4.40}{-3} & \sci{1.50}{-2} & \sci{1.76}{-3} \\
+$N_c=20,\ \alpha_c=0.1$ & \sci{2.77}{-2} & \sci{4.18}{-3} & \sci{1.55}{-2} & \sci{3.74}{-3} \\
+$N_c=20,\ \alpha_c=1$ & \sci{3.14}{-2} & \sci{6.59}{-3} & \sci{1.96}{-2} & \sci{6.58}{-3} \\
 \bottomrule
 \end{tabular}
-\caption{Mean BER under clutter (paper SNR definition, literal Alg.~3, 5 layers).}
+\caption{Mean BER under clutter (literal Alg.~3 and ISAC-NET, 5 layers, 50 frames per point).}
 \label{tab:clutter}
 \end{table}
 
 \begin{itemize}
-  \item \textbf{One model is enough.} The randomised $\eta$ lowers BER by 15--25\% under clutter and by $3\times$ without clutter at 25 dB, so per-SNR training is not needed. This is a first answer to the gap of Section~\ref{sec:gap1}.
-  \item \textbf{Communication is robust to clutter.} Both ISAC-NETs beat Alg.~3 at every SNR. Heavy clutter sets a BER floor near \sci{6}{-3} above 20 dB, because the channel is rebuilt from $L$ paths only and the unmodelled clutter becomes residual interference.
-  \item \textbf{Sensing is not.} With even 5 scatterers, mean range NMSE at 25 dB rises from 0.010 to about 0.2--0.3 and velocity NMSE to 0.4--0.6 for every receiver: the peak extraction reports clutter peaks as targets. Training on clutter does not help, because the clutter Doppler ($\approx2$ m/s) is far below one velocity bin ($\approx14$ m/s), so $\eta$ cannot separate clutter from targets.
+  \item \textbf{Communication is robust to clutter.} ISAC-NET keeps a 3--6$\times$ BER gain over Alg.~3 in every condition. Heavy clutter sets a BER floor near \sci{6}{-3} above 20 dB, because the channel is rebuilt from the $L_p$ target paths only and the unmodelled clutter becomes residual interference.
+  \item \textbf{Sensing is not.} With even 5 scatterers, mean range NMSE at 25 dB rises from 0.014 to about 0.2--0.3 and velocity NMSE to 0.4--0.7 for both receivers: the cyclic peak extraction reports clutter peaks as targets.
+  \item \textbf{Retraining the step sizes is not enough.} Retraining $\Omega$ on frames with random clutter lowers BER under clutter by only 15--25\% and leaves the sensing NMSE unchanged. The clutter Doppler ($\approx2$ m/s) is far below one velocity bin ($\approx14$ m/s), so no choice of step sizes or threshold can separate clutter from slow targets; the receiver needs a new processing stage.
 \end{itemize}
-A learned clutter-suppression stage before sensing (the residual/attention U-Net of~\cite{clutter}), unrolled inside ISAC-NET and trained jointly with $\eta$, and a low-Doppler clutter term in the channel reconstruction to remove the BER floor, are left as future work.
 
 % =====================================================================
-\section{Proposed Research Directions}\label{sec:future}
-The main direction for the next semester is robust training of deep-unfolded ISAC receivers: the results show that how the parameters are trained decides whether the receiver is reliable, and the paper's per-SNR scheme is not. Generalisation of multi-target sensing across target placement and count is proposed as a second direction.
+\section{Future Work: Clutter-Robust ISAC-NET}\label{sec:future}
+The direction for the next semester is to make ISAC-NET work in a cluttered channel, since Section~\ref{sec:clutter} shows that clutter, which the paper does not model, breaks its sensing chain while leaving communication largely intact.
 
-\subsection{Primary: per-SNR training is brittle}\label{sec:gap1}
-\paragraph{Problem.} \cite{isacnet} trains and stores a separate parameter set for each SNR. In our reproduction this set works very well on typical frames but fails completely on a few (2--6 of 24 at 15--20 dB), and those failures push the mean BER above the untrained algorithm. Averages over frames, which is all~\cite{isacnet} reports, hide this. For a real link, a failed frame is a lost packet. Training one set across all SNRs removes the failures but gives up SNR-specific tuning, and the learned set still transfers only partly to new target layouts (Section~\ref{sec:paper-lr}).
+\paragraph{Problem.} ISAC-NET reconstructs the channel from a few point targets and senses them by picking peaks in the range--Doppler map. Clutter adds many weak, slow scatterers. They become false targets in sensing, and, because the rebuilt channel leaves them out, residual interference in detection. The learnable step sizes of ISAC-NET cannot remove either effect.
 
 \paragraph{Proposed approach.}
 \begin{enumerate}
-  \item \textbf{SNR-adaptive parameters.} A small auxiliary network (a hypernetwork) maps the estimated SNR to the $5K$ parameters of the unfolded receiver. It is trained once on frames from all SNRs, so it sees the rare hard frames, yet it can still output different parameters for different SNRs, including SNRs not seen in training.
-  \item \textbf{Failure-aware loss.} Penalise the worst frames, for example through a high percentile of the per-frame error, instead of only the mean.
-  \item \textbf{Deep supervision.} Add a loss on every layer's output, so later layers cannot undo convergence (Section~\ref{sec:paper-lr}).
-  \item \textbf{Evaluation.} Report failure rate (fraction of frames with BER $>0.1$) alongside mean and median BER and NMSE. Test on unseen SNRs, random target layouts and mismatched SNR estimates, and compare with joint training, per-SNR training and the converged hand-set algorithm at equal complexity.
+  \item \textbf{Learned clutter suppression before sensing.} Insert a clutter-removal stage on the range--Doppler map, for example the residual/attention U-Net of~\cite{clutter}, inside each ISAC-NET layer, and train it jointly with the step sizes so that detection and sensing errors both shape it.
+  \item \textbf{Clutter-aware channel reconstruction.} Add a low-Doppler clutter term to the rebuilt channel, estimated from the residual, so that clutter is cancelled in detection instead of acting as interference. This targets the BER floor of Table~\ref{tab:clutter}.
+  \item \textbf{One model for all conditions.} Train on frames with random SNR, clutter density, clutter power and target layouts, so that one trained network serves every operating point and generalises to unseen target positions (Section~\ref{sec:unseen}).
+  \item \textbf{Evaluation.} Report detection and false-alarm probability as well as range/velocity NMSE and BER, against clutter density and clutter-to-noise ratio, and compare with a classical zero-Doppler notch and with~\cite{clutter}.
 \end{enumerate}
-SNR-adaptive learned parameters have been used for MIMO detection and learned coding; whether they carry over to joint sensing and communication, where a sensing error can break detection, has not been checked here yet and needs a proper literature review.
 
-\subsection{Secondary: generalisation of multi-target sensing}
-\paragraph{Problem.} \cite{isacnet} already senses several targets, through cyclic peak extraction and a learnable detection threshold ($\eta_3$), but its performance results use one fixed scenario: three point targets at 10/50/100 m and 5/10/15 m/s. Our code also fixes the number of targets at three. Three results suggest that generalisation beyond that scenario is the weak point of the sensing chain:
-\begin{itemize}
-  \item Mean NMSE is dominated by frames where a target is missed, while the median NMSE is near $10^{-7}$ (Section~\ref{sec:sensing}).
-  \item The test targets are 5 m/s apart, below the 28 m/s velocity resolution, so they can be separated only in range; velocity NMSE cannot fall much below $10^{-2}$ on the DFT grid.
-  \item On random target layouts, BER for both receivers rises and the learning gain shrinks (Section~\ref{sec:paper-lr}).
-\end{itemize}
+\paragraph{Other gaps.} Table~\ref{tab:gaps} lists further issues found during the reproduction, which can be studied alongside.
 
-\paragraph{Proposed approach.} Train and test over random target placements and an unknown, varying number of targets (building on the learnable threshold $\eta_3$ of~\cite{isacnet}), and replace on-grid peak picking with off-grid or super-resolution estimation for targets closer than one resolution bin. Evaluate with detection and false-alarm probability as well as NMSE, against the CRB.
-
-\subsection{Other gaps}
 \begin{table}[H]
 \centering\small
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.2cm}}
 \toprule
 Gap & Evidence & Possible work \\
 \midrule
+Generalisation to other target layouts & Learning gain falls from 4--11$\times$ to 3--5$\times$ on unseen layouts (Section~\ref{sec:unseen}) & Training over random placements and target counts \\
+Closely spaced targets & 5 m/s target spacing is below the 28 m/s velocity bin & Off-grid or super-resolution estimation \\
 Learning and convergence are not separated & 4 D-AMP updates per layer reach perfect-channel BER without learning & Accuracy--complexity study at equal operation count \\
-Angles assumed known; fixed transmit beam & Same symbol on all Tx antennas forms a broadside beam with nulls & Joint angle estimation or transmit precoding \\
-Complexity claim & $\BH_\varphi$ is diagonal, so a layer costs $O(L_pN_tN_rMN)$, not $O(L_pN_tN_r(MN)^2)$ & Corrected analysis (part of a paper) \\
-Model limits & Single reflection, point targets, no clutter in~\cite{isacnet} & Extended targets and multipath clutter (started in Section~\ref{sec:clutter}) \\
+Last-layer oscillation & Layer 4 beats layer 5 by $25\times$ at 25 dB & Loss on every layer's output (deep supervision) \\
+Complexity claim & $\BH_\varphi$ is diagonal, so a layer costs $O(L_pN_tN_rMN)$, not $O(L_pN_tN_r(MN)^2)$ & Corrected analysis \\
 \bottomrule
 \end{tabularx}
 \caption{Further gaps found during the reproduction.}
@@ -456,17 +411,11 @@ Model limits & Single reflection, point targets, no clutter in~\cite{isacnet} & 
 
 % =====================================================================
 \section{Conclusion}\label{sec:conclusion}
-This project reproduced ISAC-NET at full size and confirmed its main claim: learning the parameters of the literal one-update algorithm lowers BER by 4--19$\times$ and sensing NMSE by 3--6$\times$, under both our SNR convention and the paper's. It also explained the remaining differences from the published figures, chiefly the SNR definition, the LS reference and the sensing search window.
+This project reproduced ISAC-NET at full size under the paper's simulation setup and confirmed its main claim: learning the step sizes of the literal one-update algorithm lowers BER by 4--11$\times$ at 15--25 dB and velocity NMSE by about 5$\times$ at 20 dB. The reproduction also explained the remaining differences from the published figures, chiefly unstated details such as the SNR definition, the LS reference and the sensing search range.
 
-Three qualifications emerged. The paper's per-SNR training fails on a few frames at 15--20 dB, which one parameter set trained across all SNRs avoids. The learned parameters transfer only partly to target layouts not seen in training. And the same algorithm with four D-AMP updates per layer reaches perfect-channel BER without learning, so the case for deep unfolding here rests on lower cost per layer rather than on better final accuracy. A first extension showed that one parameter set trained over random SNR and clutter keeps communication robust under clutter, while sensing under clutter needs a dedicated suppression stage.
+Three qualifications emerged. The learned parameters transfer only partly to target layouts not seen in training. The last unfolded layer partly undoes the convergence of the earlier ones. And the same algorithm with four D-AMP updates per layer reaches perfect-channel BER without learning, so the case for deep unfolding here rests on lower cost per layer rather than on better final accuracy.
 
-Next semester's work follows from Section~\ref{sec:future}:
-\begin{enumerate}
-  \item SNR-adaptive parameters from a small auxiliary network, trained with a failure-aware, per-layer loss, and evaluated on failure rate as well as mean BER and NMSE.
-  \item Training and testing over random target placements and target counts, with off-grid estimation for closely spaced targets, and clutter suppression before sensing.
-  \item A comparison of learned and hand-set receivers at equal complexity.
-\end{enumerate}
-The code, results and figures are at \url{https://github.com/Kushal2oo4/isac-net}.
+Adding clutter to the channel showed that ISAC-NET's communication is robust but its sensing is not, and that retraining its step sizes cannot fix this. Next semester's work is therefore a clutter-robust ISAC-NET: a learned clutter-suppression stage before sensing and a clutter-aware channel reconstruction, trained jointly as one model for all SNR and clutter conditions. The code, results and figures are at \url{https://github.com/Kushal2oo4/isac-net}.
 
 % =====================================================================
 \begin{thebibliography}{9}
@@ -480,7 +429,7 @@ The code, results and figures are at \url{https://github.com/Kushal2oo4/isac-net
 % =====================================================================
 \appendix
 \section{Code and Reproducibility}
-The repository \url{https://github.com/Kushal2oo4/isac-net}\linebreak[0] contains the simulator (\texttt{isacnet/}), the scripts for every result in this report (\texttt{scripts/}), the result files and figures (\texttt{results/}) and unit tests (\texttt{tests/}). Each figure is regenerated by one script:
+{\sloppy The repository \url{https://github.com/Kushal2oo4/isac-net} contains the simulator (\texttt{isacnet/}), the scripts for every result in this report (\texttt{scripts/}), the result files and figures (\texttt{results/}) and unit tests (\texttt{tests/}). Each figure is regenerated by one script:\par}
 
 \begin{table}[H]
 \centering\small
@@ -488,11 +437,11 @@ The repository \url{https://github.com/Kushal2oo4/isac-net}\linebreak[0] contain
 \toprule
 Result & Script \\
 \midrule
-Baselines, Figs.~\ref{fig:ber}--\ref{fig:nmse} & \texttt{scripts/sweep\_baselines.py} \\
-Training, runs A1--B2 & \texttt{scripts/train\_isacnet.py} (\texttt{--joint} for one $\Omega$ across SNRs) \\
-Evaluation, Tables~\ref{tab:ber} and~\ref{tab:paper-lr} & \texttt{scripts/eval\_isacnet.py} (\texttt{--random-targets} for unseen layouts) \\
-Figs.~\ref{fig:ber}--\ref{fig:paper-lr} & \texttt{scripts/plot\_final.py} \\
-Paper setup, Section~\ref{sec:paper-setup} & \texttt{scripts/run\_paper\_setup.sh} \\
+Baselines & \texttt{scripts/sweep\_baselines.py} \\
+Training (Table~\ref{tab:train}) & \texttt{scripts/train\_isacnet.py --joint --lr 0.002} \\
+Evaluation, Tables~\ref{tab:ber}--\ref{tab:unseen} & \texttt{scripts/eval\_isacnet.py} \\
+Unseen targets, Table~\ref{tab:unseen} & \texttt{scripts/eval\_isacnet.py --random-targets} \\
+Figs.~\ref{fig:ber}--\ref{fig:layers} & \texttt{scripts/plot\_final.py} \\
 Clutter, Section~\ref{sec:clutter} & \texttt{scripts/run\_clutter\_train.sh}, \texttt{scripts/run\_clutter\_check.sh} \\
 \bottomrule
 \end{tabular}

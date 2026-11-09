@@ -71,11 +71,27 @@ def train_one(job):
     hi = torch.tensor(ETA_HI, device=dev)
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=max(1, args.steps))
-    best_val = validate(net, val, cfg, args.lam)
-    best_eta = net.eta.detach().cpu().numpy().tolist()
-    log, vlog = [], [(0, best_val)]
+    ckpt = None
+    if args.checkpoint_dir:
+        os.makedirs(args.checkpoint_dir, exist_ok=True)
+        ckpt = os.path.join(args.checkpoint_dir, f"ckpt_snr_{snr}.pt")
+    start = 0
+    if ckpt and os.path.exists(ckpt):  # resume an interrupted run (e.g. a Colab session that timed out)
+        st = torch.load(ckpt, map_location=dev, weights_only=False)
+        with torch.no_grad():
+            net.eta.copy_(st["eta"].to(dev))
+        opt.load_state_dict(st["opt"])
+        sched.load_state_dict(st["sched"])
+        rng.bit_generator.state = st["rng"]
+        torch.set_rng_state(st["torch_rng"])
+        start, best_val, best_eta, log, vlog = st["step"], st["best_val"], st["best_eta"], st["log"], st["vlog"]
+        print(f"[snr {snr}] resumed from step {start}", flush=True)
+    else:
+        best_val = validate(net, val, cfg, args.lam)
+        best_eta = net.eta.detach().cpu().numpy().tolist()
+        log, vlog = [], [(0, best_val)]
     t0 = time.time()
-    for it in range(args.steps):
+    for it in range(start, args.steps):
         opt.zero_grad()
         tot, com = 0.0, 0.0
         for _ in range(args.batch):
@@ -97,6 +113,11 @@ def train_one(job):
                 best_val, best_eta = v, net.eta.detach().cpu().numpy().tolist()
             print(f"[snr {snr}] step {it + 1}/{args.steps} train {np.mean([l[0] for l in log[-args.val_every:]]):.4f} "
                   f"val {v:.4f} (best {best_val:.4f}, Alg. 3 {vlog[0][1]:.4f}) ({time.time() - t0:.0f}s)", flush=True)
+            if ckpt:
+                torch.save(dict(step=it + 1, eta=net.eta.detach().cpu(), opt=opt.state_dict(), sched=sched.state_dict(),
+                                rng=rng.bit_generator.state, torch_rng=torch.get_rng_state(), best_val=best_val,
+                                best_eta=best_eta, log=log, vlog=vlog), ckpt + ".tmp")
+                os.replace(ckpt + ".tmp", ckpt)
     return snr, best_eta, dict(train=log, val=vlog, last_eta=net.eta.detach().cpu().numpy().tolist())
 
 
@@ -128,6 +149,8 @@ def main():
                    help="random clutter condition per frame: N_c in 0..--clutter, strength and Doppler spread drawn too")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", default="results/eta.json")
+    p.add_argument("--checkpoint-dir", default="",
+                   help="save a checkpoint at every validation and resume from it if present")
     args = p.parse_args()
 
     jobs = [(args, args.snr)] if args.joint else [(args, s) for s in args.snr]
