@@ -72,3 +72,22 @@ def test_paper_setup_options():
     assert np.isclose(b.noise_var, cfg.Nr * a.noise_var)
     H = ls_channel_estimate(cfg, b.Y, b.X)
     assert np.allclose(H[:, -1], H[:, 0])
+
+
+def test_clutter_off_by_default_and_frames_unchanged(cfg):
+    a = make_frame(cfg, 10.0, np.random.default_rng(7))
+    b = make_frame(cfg, 10.0, np.random.default_rng(7), clutter=None)
+    assert a.clutter is None and np.array_equal(a.Y, b.Y)
+
+
+def test_clutter_is_part_of_h_but_not_a_target():
+    from isacnet.channel import effective_channel
+    cfg = small_config(path_loss="equal", n_clutter=20, clutter_doppler_hz=30.0)
+    fr = make_frame(cfg, 10.0, np.random.default_rng(8))
+    assert len(fr.clutter.ranges) == 20 and len(fr.channel.ranges) == len(cfg.ranges)
+    assert np.isclose(np.mean(np.abs(fr.H) ** 2), 1.0)
+    H_t = effective_channel(cfg, fr.channel.gains, fr.channel.ranges, fr.channel.velocities)
+    H_c = effective_channel(cfg, fr.clutter.gains, fr.clutter.ranges, fr.clutter.velocities)
+    assert np.allclose(fr.H, H_t + H_c)
+    # Doppler spread 30 Hz at 4 GHz is about 2.2 m/s: clutter sits near zero velocity.
+    assert np.std(fr.clutter.velocities) < 6.0

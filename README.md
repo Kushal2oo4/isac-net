@@ -150,3 +150,60 @@ These are deliberate choices; each is a candidate discussion point in the report
     and keeps the η with the lowest loss on fixed validation frames, starting from the
     hand-set Alg. 3 values. Our first literal-Alg. 3 run without these safeguards diverged
     at 20–25 dB.
+
+## Clutter (scatterers) from Sagduyu et al., arXiv 2610.40586
+
+Opt-in distributed clutter, eqs. (4)-(5) of that paper: `--clutter N_c --clutter-strength α_c --clutter-doppler σ_f,c`
+on every script (`SimConfig.n_clutter`, default 0, so all earlier results are unchanged). Each scatterer has a random
+path length in 5-200 m, RCS log-uniform in [0.01, 1]·α_c·(target RCS) and Doppler ~ N(0, σ_f,c²), with the same
+propagation and fading as a target. Clutter is part of the true channel H but is not a target, so it is ignored by
+the sensing truth and the loss (`isac_loss` now reads the true targets from each frame).
+
+`train_isacnet.py --joint --snr-uniform --random-clutter --random-targets` trains one η on frames whose SNR, clutter
+condition and targets are all drawn at random (the paper's domain-randomised training), instead of per-SNR training.
+
+Quick check (`scripts/run_clutter_check.sh`: paper setup, literal Alg. 3, 5 layers, 16 frames per point, ISAC-NET =
+`eta_paper_lr.json`, trained without clutter, σ_f,c = 30 Hz):
+
+| N_c, α_c | BER @ 20 dB, Alg. 3 → ISAC-NET | median range NMSE @ 20 dB (Alg. 3 / ISAC-NET) |
+|---|---|---|
+| no clutter | 2.5e-2 → 2.3e-3 | 4e-2 / 2.5e-7 |
+| 5, 0.1 | 2.7e-2 → 3.5e-3 | 0.10 / 0.13 |
+| 5, 1 | 3.0e-2 → 3.7e-3 | 0.12 / 0.15 |
+| 20, 0.1 | 3.1e-2 → 5.3e-3 | 0.31 / 0.31 |
+| 20, 1 | 3.2e-2 → 5.3e-3 | 0.31 / 0.31 |
+
+- Communication survives clutter: ISAC-NET keeps its ~6x BER gain over Alg. 3, and its BER rises only ~2x.
+- Sensing breaks even with 5 weak scatterers: the cyclic peak extraction reports clutter peaks as targets. Clutter
+  Doppler (σ = 30 Hz, ≈ 2 m/s) is far below the ≈ 14 m/s velocity bin, so η alone cannot separate it from targets;
+  that needs a clutter-suppression stage before sensing (the paper's DLCS U-Net, or a zero-Doppler notch).
+
+### One η for all SNRs and clutter conditions (`scripts/run_clutter_train.sh`)
+
+One η trained on frames with SNR uniform in 0-25 dB and random clutter (N_c 0-20, α_c 0.01-1, σ_f,c 0-30 Hz),
+150 steps × 8 frames on an M2 Pro CPU (69 min); validation loss 0.83 vs 1.51 for Alg. 3. Evaluated with 50 frames
+per point against the clutter-free η (`eta_paper_lr.json`). Mean BER:
+
+| Test clutter | Receiver | 10 dB | 15 dB | 20 dB | 25 dB |
+|---|---|---|---|---|---|
+| none | Alg. 3 | 1.02e-1 | 5.86e-2 | 2.45e-2 | 9.02e-3 |
+| | ISAC-NET, clean η | 6.90e-2 | 1.33e-2 | 2.35e-3 | 6.46e-4 |
+| | ISAC-NET, randomised η | 6.65e-2 | 1.16e-2 | 1.53e-3 | 2.13e-4 |
+| N_c = 5, α_c = 1 | Alg. 3 | 1.02e-1 | 5.96e-2 | 2.79e-2 | 1.50e-2 |
+| | ISAC-NET, clean η | 6.80e-2 | 1.81e-2 | 4.40e-3 | 1.76e-3 |
+| | ISAC-NET, randomised η | 6.68e-2 | 1.35e-2 | 3.46e-3 | 1.35e-3 |
+| N_c = 20, α_c = 0.1 | Alg. 3 | 1.04e-1 | 6.13e-2 | 2.77e-2 | 1.55e-2 |
+| | ISAC-NET, clean η | 7.13e-2 | 1.78e-2 | 4.18e-3 | 3.74e-3 |
+| | ISAC-NET, randomised η | 7.06e-2 | 1.62e-2 | 3.17e-3 | 2.84e-3 |
+| N_c = 20, α_c = 1 | Alg. 3 | 1.07e-1 | 6.34e-2 | 3.14e-2 | 1.96e-2 |
+| | ISAC-NET, clean η | 7.42e-2 | 2.11e-2 | 6.59e-3 | 6.58e-3 |
+| | ISAC-NET, randomised η | 7.35e-2 | 1.95e-2 | 5.27e-3 | 5.74e-3 |
+
+Mean NMSE (range / velocity) at 25 dB: no clutter: Alg. 3 0.11 / 1.0, clean η 0.014 / 0.13, randomised η 0.010 / 0.036;
+with clutter every receiver sits at 0.19-0.30 / 0.43-0.71, and the randomised η equals the clean η.
+
+- The single randomised η is never worse than the clean η and lowers BER at 15-25 dB in every condition
+  (15-25 % under clutter, 3x without clutter at 25 dB). One model replaces per-SNR training.
+- Heavy clutter puts a BER floor of ~6e-3 above 20 dB: Alg. 3 rebuilds H from L paths only, so unmodelled clutter
+  is residual interference.
+- Training on clutter does not fix sensing under clutter; that needs clutter suppression before sensing.

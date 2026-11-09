@@ -144,8 +144,9 @@ def isac_loss(out, frame, cfg, lam=1.0):
     """MSE of the data symbols + lam * (range NMSE + velocity NMSE), eq. (43)."""
     x_true = torch.as_tensor(frame.X[frame.data_mask], dtype=T.CDT, device=out["x"].device)
     comm = ((out["x"] - x_true).abs() ** 2).mean()
-    r_true = np.asarray(cfg.ranges, float)
-    v_true = np.asarray(cfg.velocities, float)
+    # True targets of this frame (cfg.ranges / velocities unless drawn at random); clutter is not a target.
+    r_true = np.asarray(frame.channel.ranges, float)
+    v_true = np.asarray(frame.channel.velocities, float)
     r, v = out["r"], out["v"]
     L = len(r_true)
     if len(r) == 0:

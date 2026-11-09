@@ -19,7 +19,7 @@ from isacnet.torch_ops import pick_device  # noqa: E402
 from isacnet.isac_net import ISACNet  # noqa: E402
 from isacnet.metrics import ber_ser, nmse  # noqa: E402
 from isacnet.modulation import hard_decision  # noqa: E402
-from isacnet.channel import random_channel  # noqa: E402
+from isacnet.channel import draw_targets, random_channel  # noqa: E402
 from isacnet.simulator import make_frame  # noqa: E402
 
 
@@ -32,17 +32,6 @@ def make_cfg(args):
 def nearest_eta(table, snr):
     keys = sorted(table, key=lambda s: abs(float(s) - snr))
     return table[keys[0]]
-
-
-def draw_targets(cfg, rng, min_sep=5.0):
-    """Random targets for a robustness check: 5-150 m path lengths at least min_sep apart, 3-30 m/s either way."""
-    L = len(cfg.ranges)
-    while True:
-        r = np.sort(rng.uniform(5.0, 150.0, L))
-        if np.all(np.diff(r) >= min_sep):
-            break
-    v = rng.uniform(3.0, 30.0, L) * rng.choice([-1.0, 1.0], L)
-    return r, v
 
 
 def one_trial(job):
