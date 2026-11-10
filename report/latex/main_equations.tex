@@ -162,7 +162,7 @@ On the pilot symbols $m\in\mathcal{P}$ the transmitted QPSK symbols are known, a
   \hat{\mathbf{h}}(m,n)=\frac{\mathbf{y}(m,n)}{x(m,n)},\qquad m\in\mathcal{P}.
 \label{eq:ls}
 \end{equation}
-The ``conventional'' receiver holds the estimate of the first pilot symbol (LS + MAP) holds the estimate of the first pilot symbol for the whole frame, $\hat{\mathbf{h}}(m,n)=\hat{\mathbf{h}}(m_1,n)$, and uses it to detect each \emph{data} symbol by MAP. For a scalar symbol and an $N_r$-vector channel, MAP is maximum-ratio combining followed by the nearest 16-QAM point:
+The ``conventional'' receiver (LS + MAP) holds the estimate of the first pilot symbol for the whole frame, $\hat{\mathbf{h}}(m,n)=\hat{\mathbf{h}}(m_1,n)$, and uses it to detect each \emph{data} symbol by MAP. For a scalar symbol and an $N_r$-vector channel, MAP is maximum-ratio combining followed by the nearest 16-QAM point:
 \begin{equation}
   \hat{x}(m,n)=\arg\min_{s\in\mathcal{S}}\big\|\mathbf{y}(m,n)-\hat{\mathbf{h}}(m,n)\,s\big\|^2
   =\mathcal{Q}\!\left(\frac{\hat{\mathbf{h}}^H(m,n)\,\mathbf{y}(m,n)}{\|\hat{\mathbf{h}}(m,n)\|^2}\right),
