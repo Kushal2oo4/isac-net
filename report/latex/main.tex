@@ -328,7 +328,7 @@ where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and
   \draw[->] (sen)--node[above, font=\footnotesize]{$(\mathbf r,\mathbf v)^{k+1}$}(cha);
   \draw[->] (cha)--node[above, font=\footnotesize]{$\hat{\mathbf h}^{k+1}$}(cha-|box.east);
 \end{tikzpicture}}
-\caption{ISAC-NET: $K=5$ unfolded iterations of Alg.~3. Top: the layers in sequence; each passes its detected symbols, target estimates $(\mathbf r,\mathbf v)^k$ and channel $\hat{\mathbf h}^k$ to the next, and the last layer outputs the detected data and the target ranges and velocities. Bottom: every layer has the same three stages, eqs.~\eqref{eq:a3det}--\eqref{eq:a3h}: detection ($\eta_1^k,\eta_2^k$), sensing with target blending ($\eta_3^k,\eta_4^k$) and channel rebuilding with blending ($\eta_5^k$). Each layer has its own trainable $\Omega_k=(\eta_1^k,\dots,\eta_5^k)$; nothing else is learned.}
+\caption{ISAC-NET: $K=5$ unfolded iterations of Alg.~3. Top: the layers in sequence; each passes its detected symbols, target estimates $(\mathbf r,\mathbf v)^k$ and channel $\hat{\mathbf h}^k$ to the next, and the last layer outputs the detected data and the target ranges and velocities. Bottom: every layer has the same three stages, eqs.~\eqref{eq:a3det}--\eqref{eq:a3h}: detection ($\eta_1^k,\eta_2^k$), sensing with target blending ($\eta_3^k,\eta_4^k$) and channel rebuilding with blending ($\eta_5^k$). Each layer has its own trainable $\Omega_k=(\eta_1^k,\dots,\eta_5^k)$; nothing else is learned. The full signal flow inside a layer is drawn in Fig.~4 of~\cite{isacnet}.}
 \label{fig:arch}
 \end{figure}
 
