@@ -14,6 +14,8 @@
 \usepackage{caption}
 \usepackage{enumitem}
 \usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
 \usepackage[colorlinks=true, citecolor=blue, linkcolor=black, urlcolor=black]{hyperref}
 \usepackage{xcolor}
 \makeatletter
@@ -127,6 +129,37 @@ with white Gaussian noise $\mathbf{z}(m,n)$. Stacking all $MN$ resource elements
   \BH_\varphi^l=\operatorname{diag}\!\big(e^{-j2\pi(f_c+n\Delta f)\tau_l}e^{j2\pi f_{d,l}mT}\big).
 \end{equation}
 $\BY$ is $N_r\times MN$, $\BX$ is $N_t\times MN$ with identical rows, $\BH_a^l$ holds the gain and angles of path $l$, and the diagonal matrix $\BH_\varphi^l$ holds its delay and Doppler phases.
+Figure~\ref{fig:setup} shows the geometry.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Stealth, font=\small]
+  % arrays
+  \foreach \y in {-0.45,-0.15,0.15,0.45} {\fill (0,\y) circle (1.6pt); \fill (9,\y) circle (1.6pt);}
+  \draw[thick] (0,-0.6)--(0,0.6); \draw[thick] (9,-0.6)--(9,0.6);
+  \node[below, align=center] at (0,-0.7) {Transmitter (BS)\\ $N_t$-antenna ULA};
+  \node[below, align=center] at (9,-0.7) {Passive receiver\\ $N_r$-antenna ULA};
+  % broadside normals
+  \draw[dashed, gray] (0,0)--(2.2,0); \draw[dashed, gray] (9,0)--(6.8,0);
+  % targets
+  \coordinate (T0) at (2.6,3.0); \coordinate (T1) at (4.6,3.6); \coordinate (T2) at (6.4,2.7);
+  \foreach \t/\n in {T0/0,T2/2} {\draw[gray!70] (0,0)--(\t)--(9,0);}
+  \draw[very thick, blue!70!black, ->] (0,0)--node[left, pos=0.55]{$r_{1,l}$}(T1);
+  \draw[very thick, blue!70!black, ->] (T1)--node[right, pos=0.45]{$r_{2,l}$}(9,0);
+  \foreach \t/\n in {T0/0,T1/l,T2/2} {\fill[red!75!black] (\t) circle (4pt);}
+  \node[above left] at (T0) {target $0$};
+  \node[above=4pt] at (T1) {target $l$};
+  \node[above right] at (T2) {target $2$};
+  \draw[->, thick, red!75!black] (T1)--++(1.1,0.35) node[right]{$v_l$};
+  % angles
+  \draw[->] (1.4,0) arc[start angle=0, end angle={atan(3.6/4.6)}, radius=1.4];
+  \node at (1.95,0.45) {$\theta_t^l$};
+  \draw[->] (7.6,0) arc[start angle=180, end angle={180-atan(3.6/4.4)}, radius=1.4];
+  \node at (7.05,0.45) {$\theta_r^l$};
+\end{tikzpicture}
+\caption{Bistatic passive sensing geometry. Each target $l$ reflects the transmitted OFDM signal once: it leaves the transmitter at angle $\theta_t^l$, travels $r_l=r_{1,l}+r_{2,l}$ and arrives at the receiver at angle $\theta_r^l$, with Doppler shift set by its velocity $v_l$. The receiver decodes the data and estimates $(r_l,v_l)$ of every target from the same signal.}
+\label{fig:setup}
+\end{figure}
 
 \subsection{Problem formulation}
 The receiver jointly estimates the data and the target parameters by least squares~\cite[eq.~(18)]{isacnet}:
@@ -239,11 +272,40 @@ Iteration $k$ uses five parameters $\Omega_k=(\eta_1^k,\eta_2^k,\eta_3^k,\eta_4^
 Targets found in consecutive iterations are paired by nearest neighbour before~\eqref{eq:a3rv}. The paper writes the blends as $\eta\cdot\text{old}+\text{new}$; we use the convex form (Table~\ref{tab:choices}). The hand-set values $\eta_4=\eta_5=0$ keep no memory. As in~\cite{isacnet}, each iteration runs one D-AMP update. The iteration starts from the pilot-only estimate: sensing on the pilot symbols, then~\eqref{eq:cha}.
 
 \subsection{ISAC-NET}
-ISAC-NET unfolds $K$ iterations of Alg.~3 into $K$ layers with the same structure and separate trainable $\Omega_k$, so $5K$ parameters in total (25 for $K=5$). Our implementation uses PyTorch and the loss
+ISAC-NET unfolds $K$ iterations of Alg.~3 into $K$ layers with the same structure and separate trainable $\Omega_k$, so $5K$ parameters in total (25 for $K=5$). Figure~\ref{fig:arch} shows the structure. Our implementation uses PyTorch and the loss
 \begin{equation}
   \mathcal{L}=\frac{1}{|\mathcal{D}|}\sum_{(m,n)\in\mathcal{D}}|\hat{x}(m,n)-x(m,n)|^2+\lambda\big(\Gamma_r+\Gamma_v\big),\qquad\lambda=1,
 \end{equation}
 where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and $\Gamma_r,\Gamma_v$ are the NMSEs of~\eqref{eq:nmse}. Training uses Adam, gradient-norm clipping at 1.0, a cosine learning-rate schedule and a box constraint on each $\eta$. It keeps the parameters with the lowest loss on fixed validation frames, starting from the hand-set values, so a trained network is never worse than Alg.~3 on those frames. Table~\ref{tab:train} compares our training with the paper's.
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\begin{tikzpicture}[>=Stealth, font=\small,
+  blk/.style={draw, rounded corners=2pt, minimum height=9mm, align=center, fill=#1},
+  blk/.default=white]
+  % one layer, detailed
+  \node[blk=gray!12] (in) at (0,0) {$\BY$, pilots};
+  \node[blk=gray!12, right=6mm of in] (init) {Pilot-only\\sensing + \eqref{eq:cha}};
+  \node[draw, dashed, rounded corners, minimum width=12.2cm, minimum height=2.9cm, right=9mm of init, xshift=0mm] (lay) {};
+  \node[anchor=north west, font=\footnotesize\bfseries] at (lay.north west) {Layer $k$ (parameters $\Omega_k$)};
+  \node[blk=blue!8] (det) at ([xshift=11mm, yshift=-1mm]lay.west) {Detect\\D-AMP\\$\eta_1^k,\eta_2^k$};
+  \node[blk=green!10, right=7mm of det] (sen) {Sense\\2D-DFT +\\peaks, $\eta_3^k$};
+  \node[blk=orange!12, right=7mm of sen] (brv) {Blend\\targets\\$\eta_4^k$};
+  \node[blk=green!10, right=7mm of brv] (cha) {Rebuild\\channel\\CHA};
+  \node[blk=orange!12, right=7mm of cha] (bh) {Blend\\channel\\$\eta_5^k$};
+  \draw[->] (in)--(init);
+  \draw[->] (init)--node[above]{$\hat{\mathbf h}^1$}(init-|lay.west)--(det);
+  \draw[->] (det)--node[above, font=\footnotesize]{$\hat x$}(sen);
+  \draw[->] (sen)--node[above, font=\footnotesize]{$\tilde r,\tilde v$}(brv);
+  \draw[->] (brv)--(cha);
+  \draw[->] (cha)--(bh);
+  \draw[->] (bh.south) |- ++(0,-0.75) -| node[pos=0.25, below, font=\footnotesize]{$\hat{\mathbf h}^{k+1}$ to layer $k+1$ (repeat $K=5$ times)} (det.south);
+  \node[blk=gray!12, right=6mm of lay] (out) {$\hat{\mathbf x}$, $\hat{\mathbf r}$, $\hat{\mathbf v}$};
+  \draw[->] (lay)--(out);
+\end{tikzpicture}}
+\caption{ISAC-NET: $K$ unfolded iterations of Alg.~3. Every layer has the same five blocks, eqs.~\eqref{eq:a3det}--\eqref{eq:a3h}, and its own trainable parameters $\Omega_k=(\eta_1^k,\dots,\eta_5^k)$; nothing else is learned.}
+\label{fig:arch}
+\end{figure}
 
 \begin{table}[H]
 \centering\small
