@@ -15,7 +15,7 @@
 \usepackage{enumitem}
 \usepackage{float}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc}
+\usetikzlibrary{arrows.meta,positioning,calc,fit}
 \usepackage[colorlinks=true, citecolor=blue, linkcolor=black, urlcolor=black]{hyperref}
 \usepackage{xcolor}
 \makeatletter
@@ -295,28 +295,40 @@ where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and
 \centering
 \resizebox{\linewidth}{!}{\begin{tikzpicture}[>=Stealth, font=\small,
   blk/.style={draw, rounded corners=2pt, minimum height=9mm, align=center, fill=#1},
-  blk/.default=white]
-  % one layer, detailed
-  \node[blk=gray!12] (in) at (0,0) {$\BY$, pilots};
-  \node[blk=gray!12, right=6mm of in] (init) {Pilot-only\\sensing + \eqref{eq:cha}};
-  \node[draw, dashed, rounded corners, minimum width=12.2cm, minimum height=2.9cm, right=9mm of init, xshift=0mm] (lay) {};
-  \node[anchor=north west, font=\footnotesize\bfseries] at (lay.north west) {Layer $k$ (parameters $\Omega_k$)};
-  \node[blk=blue!8] (det) at ([xshift=11mm, yshift=-1mm]lay.west) {Detect\\D-AMP\\$\eta_1^k,\eta_2^k$};
-  \node[blk=green!10, right=7mm of det] (sen) {Sense\\2D-DFT +\\peaks, $\eta_3^k$};
-  \node[blk=orange!12, right=7mm of sen] (brv) {Blend\\targets\\$\eta_4^k$};
-  \node[blk=green!10, right=7mm of brv] (cha) {Rebuild\\channel\\CHA};
-  \node[blk=orange!12, right=7mm of cha] (bh) {Blend\\channel\\$\eta_5^k$};
+  blk/.default=white,
+  lay/.style={draw, thick, rounded corners=3pt, minimum height=11mm, minimum width=17mm, align=center, fill=blue!5}]
+  % ---- top row: all layers ----
+  \node[blk=gray!12] (in) at (0,0) {$\BY$,\\pilots};
+  \node[blk=gray!12, right=6mm of in] (init) {Pilot-only\\sensing + CHA};
+  \node[lay, right=9mm of init] (L1) {Layer 1\\$\Omega_1$};
+  \node[lay, right=9mm of L1] (L2) {Layer 2\\$\Omega_2$};
+  \node[right=6mm of L2] (dots) {$\cdots$};
+  \node[lay, right=6mm of dots] (LK) {Layer $K$\\$\Omega_K$};
+  \node[blk=gray!12, right=9mm of LK] (out) {$\hat{\mathbf x}$, $\hat{\mathbf r}$, $\hat{\mathbf v}$};
   \draw[->] (in)--(init);
-  \draw[->] (init)--node[above]{$\hat{\mathbf h}^1$}(init-|lay.west)--(det);
-  \draw[->] (det)--node[above, font=\footnotesize]{$\hat x$}(sen);
-  \draw[->] (sen)--node[above, font=\footnotesize]{$\tilde r,\tilde v$}(brv);
-  \draw[->] (brv)--(cha);
-  \draw[->] (cha)--(bh);
-  \draw[->] (bh.south) |- ++(0,-0.75) -| node[pos=0.25, below, font=\footnotesize]{$\hat{\mathbf h}^{k+1}$ to layer $k+1$ (repeat $K=5$ times)} (det.south);
-  \node[blk=gray!12, right=6mm of lay] (out) {$\hat{\mathbf x}$, $\hat{\mathbf r}$, $\hat{\mathbf v}$};
-  \draw[->] (lay)--(out);
+  \draw[->] (init)--node[above, font=\footnotesize]{$\hat{\mathbf h}^1$}(L1);
+  \draw[->] (L1)--(L2);
+  \draw[->] (L2)--(dots); \draw[->] (dots)--(LK);
+  \draw[->] (LK)--(out);
+  % Y bus to every layer
+  \draw[gray] (in.north)--++(0,0.9) coordinate (bus) -| (LK.north);
+  \foreach \n in {L1,L2} \draw[->,gray] (\n.north|-bus)--(\n.north);
+  \draw[->,gray] (LK.north|-bus)--(LK.north);
+  \node[gray, font=\footnotesize, above] at ($(bus)!0.5!(LK.north|-bus)$) {received signal $\BY$ is used by every layer};
+  % ---- bottom: inside layer k ----
+  \node[blk=blue!8, minimum width=27mm] (det) at (2.6,-3.4) {\textbf{Detect}\\D-AMP update\\$\eta_1^k,\ \eta_2^k$};
+  \node[blk=green!10, minimum width=33mm, right=17mm of det] (sen) {\textbf{Sense}\\2D-DFT, peak extraction,\\blend with old targets\\$\eta_3^k,\ \eta_4^k$};
+  \node[blk=orange!12, minimum width=33mm, right=17mm of sen] (cha) {\textbf{Rebuild channel}\\CHA from targets,\\blend with old channel\\$\eta_5^k$};
+  \node[draw, dashed, rounded corners, fit=(det)(cha), inner xsep=9mm, inner ysep=9mm] (box) {};
+  \node[anchor=north west, font=\footnotesize\bfseries] at (box.north west) {Inside layer $k$};
+  \draw[dashed, gray] (L2.south west)--(box.north west);
+  \draw[dashed, gray] (L2.south east)--(box.north east);
+  \draw[->] (box.west|-det)--node[above, font=\footnotesize]{$\hat{\mathbf h}^k$}(det);
+  \draw[->] (det)--node[above, font=\footnotesize]{$\hat x^{k+1}$}(sen);
+  \draw[->] (sen)--node[above, font=\footnotesize]{$(\mathbf r,\mathbf v)^{k+1}$}(cha);
+  \draw[->] (cha)--node[above, font=\footnotesize]{$\hat{\mathbf h}^{k+1}$}(cha-|box.east);
 \end{tikzpicture}}
-\caption{ISAC-NET: $K$ unfolded iterations of Alg.~3. Every layer has the same five blocks, eqs.~\eqref{eq:a3det}--\eqref{eq:a3h}, and its own trainable parameters $\Omega_k=(\eta_1^k,\dots,\eta_5^k)$; nothing else is learned.}
+\caption{ISAC-NET: $K=5$ unfolded iterations of Alg.~3. Top: the layers in sequence; each passes its detected symbols, target estimates $(\mathbf r,\mathbf v)^k$ and channel $\hat{\mathbf h}^k$ to the next, and the last layer outputs the detected data and the target ranges and velocities. Bottom: every layer has the same three stages, eqs.~\eqref{eq:a3det}--\eqref{eq:a3h}: detection ($\eta_1^k,\eta_2^k$), sensing with target blending ($\eta_3^k,\eta_4^k$) and channel rebuilding with blending ($\eta_5^k$). Each layer has its own trainable $\Omega_k=(\eta_1^k,\dots,\eta_5^k)$; nothing else is learned.}
 \label{fig:arch}
 \end{figure}
 
