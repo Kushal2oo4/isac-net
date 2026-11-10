@@ -14,7 +14,13 @@
 \usepackage{caption}
 \usepackage{enumitem}
 \usepackage{float}
-\usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage[colorlinks=true, citecolor=blue, linkcolor=black, urlcolor=black]{hyperref}
+\usepackage{xcolor}
+\makeatletter
+\renewcommand{\@cite}[2]{\textcolor{blue}{[{#1\if@tempswa , #2\fi}]}}
+\makeatother
 \pdfstringdefDisableCommands{\def\ensuremath#1{#1}}
 
 \graphicspath{{figures/}}
@@ -24,9 +30,9 @@
 
 % ---------- personal details: EDIT THESE ----------
 \newcommand{\studentname}{Kushal Dornahalli}       % check spelling
-\newcommand{\rollno}{ROLL NO}                      % e.g. 230 1xx xxx
+\newcommand{\rollno}{230102052}                      % e.g. 230 1xx xxx
 \newcommand{\department}{Department of Electronics and Electrical Engineering} % check
-\newcommand{\supervisor}{Prof.\ SUPERVISOR NAME}
+\newcommand{\supervisor}{Prof. Manoj BR}
 \newcommand{\reportdate}{November 2026}
 % --------------------------------------------------
 
@@ -45,7 +51,7 @@
   {\large \studentname\ (\rollno)\par}
   \vspace{4pt}
   \department\par
-  Indian Institute of Technology, Guwahati\par
+  Indian Institute of Technology Guwahati\par
   \vspace{4pt}
   B.Tech Project (7th semester) \quad Supervisor: \supervisor\par
   \vspace{4pt}
@@ -56,31 +62,31 @@
 \begin{abstract}
 \noindent In integrated passive sensing and communication (IPSAC), a single receiver must decode the transmitted data and estimate the range and velocity of targets from the same received signal, without knowing the data in advance. ISAC-NET~\cite{isacnet} solves this with an iterative algorithm that alternates symbol detection, passive sensing and channel reconstruction, and unfolds it into a network whose 25 step-size parameters are learned from data.
 
-This project reproduces ISAC-NET end to end at the paper's full simulation size (256 OFDM symbols $\times$ 1024 subcarriers, $8\times 8$ antennas, three targets) in Python and PyTorch, together with the LS, D-AMP and 2D-DFT baselines, under the paper's own simulation setup. Learning the parameters lowers the bit error rate (BER) by 4--11$\times$ at 15--25~dB and the velocity NMSE by about 5$\times$ at 20~dB compared with the hand-set algorithm, which confirms the paper's main claim. The remaining differences from the published figures are traced to details the paper does not state.
+This project reproduces ISAC-NET end to end at the paper's full simulation size (256 OFDM symbols $\times$ 1024 subcarriers, $8\times 8$ antennas, 3 targets) in Python and PyTorch, together with the LS, D-AMP and 2D-DFT baselines, under the paper's own simulation setup. Learning the parameters lowers the bit error rate (BER) by 4-11$\times$ at 15--25~dB and the velocity NMSE by about 5$\times$ at 20~dB compared with the hand-set algorithm.
 
-The reproduction also exposes limitations the paper does not report. The learned parameters transfer only partly to target layouts not seen in training, where the gain falls to 3--5$\times$; the last unfolded layer partly undoes the convergence of the earlier ones, which sets a BER floor near $8\times10^{-4}$; and the same algorithm with four inner iterations per layer reaches perfect-channel BER without any learning, so the benefit of unfolding lies in lower cost rather than higher accuracy. Since the paper's channel has no clutter, we add distributed clutter scatterers to the channel model as a first extension. Communication stays robust (ISAC-NET keeps a 3--6$\times$ BER gain), but sensing breaks down with as few as five scatterers, because the peak extraction reports clutter as targets, and retraining the step sizes on clutter does not fix it. This motivates the proposed research direction for the next semester: a clutter-robust ISAC-NET with a learned clutter-suppression stage before sensing.
+Since the paper's channel has no clutter, we add distributed clutter scatterers to the channel model as a first extension. Communication stays robust (ISAC-NET keeps a 3-6$\times$ BER gain), but sensing breaks down with as few as five scatterers, because the peak extraction reports clutter as targets, and retraining the step sizes on clutter does not fix it. This motivates the proposed research direction: a clutter-robust ISAC-NET with a learned clutter-suppression stage before sensing.
 \end{abstract}
 
-\newpage
-\tableofcontents
+\vspace{8pt}
+{\setcounter{tocdepth}{1}\small\tableofcontents}
 \newpage
 
 % =====================================================================
 \section{Introduction}
 Integrated sensing and communication (ISAC) lets one radio system share spectrum and hardware between data transmission and target sensing, and is a candidate feature of 6G networks~\cite{isacnet,zhang2022}. In \emph{active} (monostatic) sensing the receiver sits next to the transmitter and knows the transmitted waveform. In \emph{passive} (bistatic) sensing the sensing receiver is a communication receiver at another site. It avoids full-duplex self-interference, but it does not know the data symbols, so it must decode them before it can use them as a sensing reference.
 
-Sensing from the pilots alone wastes most of the frame, since pilots fill only 1 of every 14 OFDM symbols. Sensing from the data needs correctly decoded symbols, and decoding errors corrupt the sensing estimate, which in turn corrupts the channel used for decoding. ISAC-NET~\cite{isacnet} handles this loop jointly. Its iterative algorithm (Alg.~3 of~\cite{isacnet}) alternates improved D-AMP detection, 2D-DFT range--Doppler sensing on the detected symbols, and channel reconstruction from the sensed targets. Because the result depends on five hand-set parameters per iteration, the authors unfold the iterations into network layers and learn those parameters, a form of model-driven deep learning known as deep unfolding~\cite{oampnet}.
+Sensing from the pilots alone wastes most of the frame, since pilots fill only 1 of every 14 OFDM symbols. Sensing from the data needs correctly decoded symbols, and decoding errors corrupt the sensing estimate, which in turn corrupts the channel used for decoding. ISAC-NET~\cite{isacnet} handles this loop jointly. Its iterative algorithm (Alg.~3 of~\cite{isacnet}) alternates improved D-AMP detection, 2D-DFT range--Doppler sensing on the detected symbols, and channel reconstruction from the sensed targets. Because the result depends on 5 hand-set parameters per iteration, the authors unfold the iterations into network layers and learn those parameters, a form of model-driven deep learning known as deep unfolding~\cite{oampnet}.
 
 \subsection{Objectives}
-This project had two aims: to reproduce ISAC-NET faithfully enough to test its claims, and to find where its approach is weak, as the basis for research in the next semester.
+Aim of this project was to reproduce ISAC-NET faithfully enough to test its claims, finding where its approach is weak and extending it to introduce clutter in the channel.
 
 \subsection{Contributions}
 \begin{enumerate}
   \item An open Python/PyTorch implementation of the full system model, three baselines, Alg.~3 and ISAC-NET at the paper's Table~III size, with unit tests (\url{https://github.com/Kushal2oo4/isac-net}).
   \item A list of points where the paper is ambiguous or inconsistent, the choice made for each, and an explanation of why our figures differ from the published ones.
   \item A reproduction of the paper's main claim under its own setup: learning lowers BER by 4--11$\times$ compared with the hand-set algorithm.
-  \item Findings beyond the paper: the learned parameters transfer only partly to unseen target layouts, the last layer partly undoes convergence, and a converged hand-set algorithm already reaches perfect-channel BER.
-  \item A first extension: clutter scatterers in the channel model, showing that ISAC-NET's sensing fails under clutter, which defines the research direction for the next semester.
+  % \item Findings beyond the paper: the learned parameters transfer only partly to unseen target layouts, and the last layer partly undoes the convergence of the earlier ones.
+  \item A first extension: clutter scatterers in the channel model, showing that ISAC-NET's sensing fails under clutter, which defines the research direction for future work.
 \end{enumerate}
 
 Section~\ref{sec:background} reviews background, Section~\ref{sec:model} gives the system model, Section~\ref{sec:algos} the algorithms and Section~\ref{sec:impl} the implementation and setup. Section~\ref{sec:results} presents the results, Section~\ref{sec:future} the proposed future work, and Section~\ref{sec:conclusion} concludes.
@@ -88,7 +94,7 @@ Section~\ref{sec:background} reviews background, Section~\ref{sec:model} gives t
 % =====================================================================
 \section{Background}\label{sec:background}
 \subsection{OFDM radar sensing}
-With OFDM, the radar channel can be read directly from the data: dividing each received resource element by the transmitted symbol removes the modulation, leaving a matrix whose phase rotates with delay across subcarriers and with Doppler across symbols. An inverse DFT over subcarriers and a DFT over symbols then give a range--velocity map, whose peaks are the targets~\cite{sturm2011}. This works only when the transmitted symbols are known, which is why passive sensing depends on correct detection.
+With OFDM, the radar channel can be read directly from the data: dividing each received resource element by the transmitted symbol removes the modulation, leaving a matrix whose phase rotates with delay across subcarriers and with Doppler across symbols. An inverse DFT over subcarriers and a DFT over symbols then give a range-velocity map, whose peaks are the targets~\cite{sturm2011}. This works only when the transmitted symbols are known, which is why passive sensing depends on correct detection.
 
 \subsection{Deep unfolding}
 An iterative algorithm with a fixed number of iterations can be written as a feed-forward network, one layer per iteration. Its hand-set parameters (step sizes, damping factors, thresholds) become trainable weights, while the structure of the algorithm is kept. The result needs far fewer parameters and training samples than a black-box network and stays interpretable. OAMP-Net2~\cite{oampnet} applies this to MIMO detection and is one of the baselines in~\cite{isacnet}.
@@ -101,28 +107,72 @@ ISAC-NET~\cite{isacnet} combines the two: it unfolds an iterative receiver that 
 A base station with $N_t$ antennas sends an OFDM frame of $M$ symbols $\times$ $N$ subcarriers. A receiver with $N_r$ antennas at another site decodes the data and senses $L_p$ point targets from their echoes, following~\cite[Sec.~II]{isacnet}.
 
 \subsection{Transmitted frame}
-The same symbol $x(m,n)$ is sent on every transmit antenna, so the transmit vector is $\mathbf{x}(m,n)=[x(m,n),\dots,x(m,n)]^T$. One of every 14 OFDM symbols is a known QPSK pilot; the rest carry 16-QAM data.
+The same symbol $x(m,n)$ is sent on every transmit antenna, so the transmit vector is 
+\begin{equation}
+    {x}(m,n)=[x(m,n),\dots,x(m,n)]^T
+\end{equation}One of every 14 OFDM symbols is a known QPSK pilot; the rest carry 16-QAM data.
 
 \subsection{Channel}
 Each target reflects the signal once. Path $l$ has length $r_l=r_{1,l}+r_{2,l}$ (transmitter to target plus target to receiver), delay $\tau_l=r_l/c$ and Doppler shift $f_{d,l}=v_l f_c/c$. Its channel at symbol $m$ and subcarrier $n$ is
+% \begin{equation}
+%   \tilde{\BH}_l(m,n)=\tilde{f_l}\,\tilde{F_l}\,e^{-j2\pi(f_c+n\Delta f)\tau_l}\,e^{j2\pi f_{d,l} m T}\,\mathbf{d}_r(\theta_r^l)\,\mathbf{d}_t^H(\theta_t^l),
+% \end{equation}
 \begin{equation}
-  \tilde{\BH}_l(m,n)=\sqrt{F_l}\,f_l\,e^{-j2\pi(f_c+n\Delta f)\tau_l}\,e^{j2\pi f_{d,l} m T}\,\mathbf{d}_r(\theta_r^l)\,\mathbf{d}_t^H(\theta_t^l),
+    \tilde{\mathbf{H}}_l(m,n)=\tilde{f}_l\,\tilde{F}_l\,e^{j2\pi(f_{d,l}mT-(f_c+n\Delta f)\tau_l)}\,\mathbf{d}_r(\theta_r^l)\,\mathbf{d}_t^\dagger(\theta_t^l)
 \end{equation}
 where $\mathbf{d}_t$ and $\mathbf{d}_r$ are the transmit and receive steering vectors, $f_l$ is small-scale (Weibull) fading, and
 \begin{equation}
-  F_l=\frac{\lambda^2\sigma_l}{(4\pi)^3\,(r_{1,l}\,r_{2,l})^2}
+  \tilde{F}_l=\frac{\lambda^2\sigma_l}{(4\pi)^3\,(r_{1,l}\,r_{2,l})^2}
 \end{equation}
 is the bistatic path loss with radar cross-section $\sigma_l$. The received vector is
 \begin{equation}
   \mathbf{y}(m,n)=\sum_{l=0}^{L_p-1}\tilde{\BH}_l(m,n)\,\mathbf{x}(m,n)+\mathbf{z}(m,n)
 \end{equation}
 with white Gaussian noise $\mathbf{z}(m,n)$. Stacking all $MN$ resource elements gives~\cite[eq.~(9)]{isacnet}
+% \begin{equation}
+%   \BY=\sum_{l=0}^{L_p-1}\BH_a^l\,\BX\,\BH_\varphi^l+\BZ,\qquad
+%   \BH_a^l=\sqrt{F_l}\,f_l\,\mathbf{d}_r\mathbf{d}_t^H,\qquad
+%   \BH_\varphi^l=\operatorname{diag}\!\big(e^{-j2\pi(f_c+n\Delta f)\tau_l}e^{j2\pi f_{d,l}mT}\big).
+% \end{equation}
 \begin{equation}
-  \BY=\sum_{l=0}^{L_p-1}\BH_a^l\,\BX\,\BH_\varphi^l+\BZ,\qquad
-  \BH_a^l=\sqrt{F_l}\,f_l\,\mathbf{d}_r\mathbf{d}_t^H,\qquad
-  \BH_\varphi^l=\operatorname{diag}\!\big(e^{-j2\pi(f_c+n\Delta f)\tau_l}e^{j2\pi f_{d,l}mT}\big).
+    \BY=\sum_{l=0}^{L_p-1}\BH_a^l\,\BX\,\BH_\varphi^l+\BZ
+\end{equation}
+\begin{equation}
+    \BH_a^l=\tilde{f}_l\,\tilde{F}_l\,\mathbf{d}_r\mathbf{d}_t^H\qquad
+  \BH_\varphi^l=\operatorname{diag}\!\big(e^{j2\pi(f_{d,l}mT-(f_c+n\Delta f)\tau_l)}\big).
 \end{equation}
 $\BY$ is $N_r\times MN$, $\BX$ is $N_t\times MN$ with identical rows, $\BH_a^l$ holds the gain and angles of path $l$, and the diagonal matrix $\BH_\varphi^l$ holds its delay and Doppler phases.
+Figure~\ref{fig:setup} shows the geometry.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Stealth, font=\small]
+  % arrays
+  \foreach \y in {-0.45,-0.15,0.15,0.45} {\fill (0,\y) circle (1.6pt); \fill (9,\y) circle (1.6pt);}
+  \draw[thick] (0,-0.6)--(0,0.6); \draw[thick] (9,-0.6)--(9,0.6);
+  \node[below, align=center] at (0,-0.7) {Transmitter (BS)\\ $N_t$-antenna ULA};
+  \node[below, align=center] at (9,-0.7) {Passive receiver\\ $N_r$-antenna ULA};
+  % broadside normals
+  \draw[dashed, gray] (0,0)--(2.2,0); \draw[dashed, gray] (9,0)--(6.8,0);
+  % targets
+  \coordinate (T0) at (2.6,3.0); \coordinate (T1) at (4.6,3.6); \coordinate (T2) at (6.4,2.7);
+  \foreach \t/\n in {T0/0,T2/2} {\draw[gray!70] (0,0)--(\t)--(9,0);}
+  \draw[very thick, blue!70!black, ->] (0,0)--node[left, pos=0.55]{$r_{1,l}$}(T1);
+  \draw[very thick, blue!70!black, ->] (T1)--node[right, pos=0.45]{$r_{2,l}$}(9,0);
+  \foreach \t/\n in {T0/0,T1/l,T2/2} {\fill[red!75!black] (\t) circle (4pt);}
+  \node[above left] at (T0) {target $0$};
+  \node[above=4pt] at (T1) {target $l$};
+  \node[above right] at (T2) {target $2$};
+  \draw[->, thick, red!75!black] (T1)--++(1.1,0.35) node[right]{$v_l$};
+  % angles
+  \draw[->] (1.4,0) arc[start angle=0, end angle={atan(3.6/4.6)}, radius=1.4];
+  \node at (1.95,0.45) {$\theta_t^l$};
+  \draw[->] (7.6,0) arc[start angle=180, end angle={180-atan(3.6/4.4)}, radius=1.4];
+  \node at (7.05,0.45) {$\theta_r^l$};
+\end{tikzpicture}
+\caption{Bistatic passive sensing geometry. Each target $l$ reflects the transmitted OFDM signal once: it leaves the transmitter at angle $\theta_t^l$, travels $r_l=r_{1,l}+r_{2,l}$ and arrives at the receiver at angle $\theta_r^l$, with Doppler shift set by its velocity $v_l$. The receiver decodes the data and estimates $(r_l,v_l)$ of every target from the same signal.}
+\label{fig:setup}
+\end{figure}
 
 \subsection{Problem formulation}
 The receiver jointly estimates the data and the target parameters by least squares~\cite[eq.~(18)]{isacnet}:
@@ -137,37 +187,138 @@ With bandwidth $B=N\Delta f\approx 123$~MHz, the range bin is $c/B\approx 2.4$~m
 
 % =====================================================================
 \section{Algorithms}\label{sec:algos}
-All receivers start from the pilot symbols, which give a least-squares (LS) channel estimate and a coarse range--Doppler map. They differ in how they use the data symbols.
+All receivers start from the pilot symbols, which give a least-squares (LS) channel estimate and a coarse range--Doppler map. They differ in how they use the data symbols. This section lists every equation the receiver evaluates, in the form used by our implementation; equation numbers in square brackets refer to~\cite{isacnet}.
 
-\subsection{Baselines}
-\begin{itemize}
-  \item \textbf{LS + MAP.} The channel is estimated by LS on the pilots, and each data symbol is detected by a maximum a posteriori (MAP) decision.
-  \item \textbf{Improved D-AMP (Alg.~1 of~\cite{isacnet}).} Starting from $\BX=\BZ=\mathbf{0}$, it repeats a signal update and a residual update:
-  \begin{align}
-    \BX_d^{k+1}&=\eta_1^k\BX_d^k+\sum_l(\hat{\BH}_a^l)^H\BZ_d^k(\hat{\BH}_\varphi^l)^H,\\
-    \BZ_d^{k+1}&=\eta_2^k\BZ_d^k+\BY_d-\sum_l\hat{\BH}_a^l\BX_d^k\hat{\BH}_\varphi^l.
-  \end{align}
-  \item \textbf{2D-DFT sensing~\cite{sturm2011}.} The received symbols are divided element-wise by the transmitted (or detected) symbols, $S(m,n)=y(m,n)/x(m,n)$. An IDFT over subcarriers gives range and a DFT over symbols gives velocity, each zero-padded $10\times$. Peaks are extracted one at a time.
-  \item \textbf{Channel reconstruction (Alg.~2 of~\cite{isacnet}).} The channel of each path is rebuilt from its estimated range and velocity through $\BH_\varphi$ (delay and Doppler phases) and $\BH_a$ (gain and angles).
-\end{itemize}
+\subsection{Effective channel}
+Because the same symbol is sent from every transmit antenna, only the sum of each path's transmit columns matters. Writing $\mathbf{g}_l=\BH_a^l\mathbf{1}_{N_t}\in\mathbb{C}^{N_r}$ for the complex gain vector of path $l$ (fading, path loss, both steering vectors and the carrier phase $e^{-j2\pi f_c\tau_l}$), the received signal reduces to
+\begin{equation}
+  \mathbf{y}(m,n)=\mathbf{h}(m,n)\,x(m,n)+\mathbf{z}(m,n),\qquad
+  \mathbf{h}(m,n)=\sum_{l=0}^{L_p-1}\mathbf{g}_l\,\phi_l(m,n),
+\label{eq:effch}
+\end{equation}
+\begin{equation}
+  \phi_l(m,n)=e^{-j2\pi n\Delta f\,r_l/c}\;e^{\,j2\pi mT\,v_l f_c/c}.
+\label{eq:phi}
+\end{equation}
+$\phi_l$ carries the delay $\tau_l=r_l/c$ across subcarriers and the Doppler shift $f_{d,l}=v_lf_c/c$ across symbols [(14)--(17)].
+
+\subsection{Pilot processing and MAP detection}
+On the pilot symbols $m\in\mathcal{P}$ the transmitted QPSK symbols are known, and the LS estimate is
+\begin{equation}
+  \hat{\mathbf{h}}(m,n)=\frac{\mathbf{y}(m,n)}{x(m,n)},\qquad m\in\mathcal{P}.
+\label{eq:ls}
+\end{equation}
+The ``conventional'' receiver holds the estimate of the first pilot symbol for the whole frame, $\hat{\mathbf{h}}(m,n)=\hat{\mathbf{h}}(m_1,n)$. Given any channel estimate, each data symbol is detected by MAP, which for a scalar symbol and an $N_r$-vector channel is maximum-ratio combining followed by the nearest 16-QAM point:
+\begin{equation}
+  \hat{x}(m,n)=\arg\min_{s\in\mathcal{S}}\big\|\mathbf{y}(m,n)-\hat{\mathbf{h}}(m,n)\,s\big\|^2
+  =\mathcal{Q}\!\left(\frac{\hat{\mathbf{h}}^H(m,n)\,\mathbf{y}(m,n)}{\|\hat{\mathbf{h}}(m,n)\|^2}\right),
+\label{eq:map}
+\end{equation}
+where $\mathcal{S}$ is the 16-QAM alphabet and $\mathcal{Q}(\cdot)$ rounds to its nearest point.
+
+\subsection{Improved D-AMP detection (Alg.~1)}
+Starting from $\BX_d^1=\BZ_d^1=\mathbf{0}$, Alg.~1 alternates a signal update and a residual update on the data symbols [(23)--(24)]:
+\begin{align}
+  \BX_d^{k+1}&=\eta_1^k\,\BX_d^k+\mu\sum_{l}(\hat{\BH}_a^l)^H\,\BZ_d^k\,(\hat{\BH}_\varphi^l)^H,\label{eq:damp1}\\
+  \BZ_d^{k+1}&=\eta_2^k\,\BZ_d^k+\BY_d-\sum_{l}\hat{\BH}_a^l\,\BX_d^k\,\hat{\BH}_\varphi^l.\label{eq:damp2}
+\end{align}
+With the effective channel~\eqref{eq:effch}, both updates act element by element:
+\begin{equation}
+\begin{aligned}
+  x^{k+1}(m,n)&=\eta_1^k\,x^k(m,n)+\mu(m,n)\,\hat{\mathbf{h}}^H(m,n)\,\mathbf{z}^k(m,n),\\
+  \mathbf{z}^{k+1}(m,n)&=\eta_2^k\,\mathbf{z}^k(m,n)+\mathbf{y}(m,n)-\hat{\mathbf{h}}(m,n)\,x^k(m,n),
+\end{aligned}
+\label{eq:dampre}
+\end{equation}
+with step size $\mu(m,n)=0.5/\|\hat{\mathbf{h}}(m,n)\|^2$. The output is $\hat{x}=\mathcal{Q}(x^{K+1})$. The hand-set values are $\eta_1=1$, $\eta_2=0$.
+
+\subsection{2D-DFT passive sensing}
+Dividing the received signal of antenna $k$ by the known or detected symbols removes the modulation [(27)--(28)]:
+\begin{equation}
+  S_k(m,n)=\frac{y_k(m,n)}{\hat{x}(m,n)}\approx\sum_{l}g_{l,k}\,e^{-j2\pi n\Delta f\,r_l/c}\,e^{\,j2\pi mT\,v_lf_c/c}.
+\label{eq:div}
+\end{equation}
+A DFT over symbols (zero-padded to $M_I$ points) and an IDFT over subcarriers (zero-padded to $N_I$ points) turn each path into a peak. The maps of the $N_r$ antennas are added non-coherently:
+\begin{equation}
+  P(p,q)=\sum_{k=1}^{N_r}\Big|\sum_{m}\sum_{n}S_k(m,n)\,e^{-j2\pi mp/M_I}\,e^{\,j2\pi nq/N_I}\Big|^2 .
+\label{eq:map2d}
+\end{equation}
+The peak position $(p^\star,q^\star)$ gives the target's velocity and range [(30)--(31)]:
+\begin{equation}
+  \hat{v}=\frac{p^\star c}{T M_I f_c},\qquad \hat{r}=\frac{q^\star c}{N_I\,\Delta f}.
+\label{eq:rv}
+\end{equation}
+The peak is searched only inside $r\le200$~m, $|v|\le50$~m/s and then refined off the grid by maximising the correlation of $S_k$ with a single path $a_{r,v}(m,n)=e^{-j2\pi n\Delta f r/c}e^{j2\pi mTvf_c/c}$.
+
+\subsection{Cyclic peak extraction}
+Several targets are found one at a time [(36)--(38)]. Starting from $R_k=S_k$, the strongest peak of the map~\eqref{eq:map2d} of $R_k$ is taken as a target; all gains are then re-fitted jointly and the fitted paths removed:
+\begin{equation}
+  \{\hat{g}_{l,k}\}=\arg\min_{\{g_{l,k}\}}\sum_{m,n}\Big|S_k(m,n)-\sum_{l}g_{l,k}\,a_{\hat r_l,\hat v_l}(m,n)\Big|^2,\qquad
+  R_k=S_k-\sum_{l}\hat{g}_{l,k}\,a_{\hat r_l,\hat v_l}.
+\label{eq:clean}
+\end{equation}
+This repeats up to $L_{\max}$ times. A peak counts as a target if its height exceeds $\eta_3$ (in dB above the median of the map). In ISAC-NET this hard test is replaced by a soft weight, so that $\eta_3$ can be learned:
+\begin{equation}
+  w_l=\operatorname{sigmoid}\!\Big(\frac{\mathrm{peak}_l\,[\mathrm{dB}]-\eta_3}{\tau_w}\Big),
+\label{eq:gate}
+\end{equation}
+with a fixed temperature $\tau_w$. The hand-set threshold is $\eta_3=10$~dB.
+
+\subsection{Channel reconstruction (Alg.~2)}
+From the sensed ranges and velocities, the delay and Doppler of each path are rebuilt [(32)], $\hat\tau_l=\hat r_l/c$ and $\hat f_{d,l}=\hat v_lf_c/c$, which give $\hat\phi_l$ by~\eqref{eq:phi}. The paper rebuilds the gain matrix $\BH_a^l$ from estimated angles and path loss [(13)]. We fit the gain vectors directly by least squares on the known pilots and the detected data, which absorbs angles, fading and path loss in one step:
+\begin{equation}
+  \{\hat{\mathbf{g}}_l\}=\arg\min_{\{\mathbf{g}_l\}}\sum_{m,n}\Big\|\mathbf{y}(m,n)-\sum_l\mathbf{g}_l\,\hat\phi_l(m,n)\,\hat{x}(m,n)\Big\|^2,\qquad
+  \hat{\mathbf{h}}(m,n)=\sum_l w_l\,\hat{\mathbf{g}}_l\,\hat\phi_l(m,n).
+\label{eq:cha}
+\end{equation}
+We write this map from $(\hat{\mathbf{r}},\hat{\mathbf{v}})$ to $\hat{\mathbf{h}}$ as $\mathrm{CHA}(\cdot)$.
 
 \subsection{Alg.~3: iterative ISAC signal processing}
-Iteration $k$ uses five parameters $\Omega_k=(\eta_1,\eta_2,\eta_3,\eta_4,\eta_5)$:
-\begin{enumerate}
-  \item \textbf{Detect:} one D-AMP signal and residual update with $\eta_1$ and $\eta_2$, using the current channel.
-  \item \textbf{Sense:} 2D-DFT on the detected symbols; peaks above the threshold $\eta_3$ are taken one by one as targets.
-  \item \textbf{Blend targets:} $(\mathbf{r},\mathbf{v})\leftarrow\eta_4\cdot(\mathbf{r},\mathbf{v})_{\text{old}}+(\mathbf{r},\mathbf{v})_{\text{new}}$.
-  \item \textbf{Rebuild the channel:} $\BH_{\text{new}}=F_3(\mathbf{r},\mathbf{v})$.
-  \item \textbf{Blend the channel:} $\BH\leftarrow\eta_5\cdot\BH_{\text{old}}+\BH_{\text{new}}$, then return to step 1.
-\end{enumerate}
-We study two variants: the \emph{literal} one, with one D-AMP update per iteration as written in~\cite{isacnet}, and a \emph{converging} one, with four D-AMP updates per iteration.
+Iteration $k$ uses five parameters $\Omega_k=(\eta_1^k,\eta_2^k,\eta_3^k,\eta_4^k,\eta_5^k)$ and chains the blocks above [(34)--(42)]:
+\begin{align}
+  \text{detect:}\quad & x^{k+1},\ \mathbf{z}^{k+1}\ \text{from~\eqref{eq:dampre} with } \eta_1^k,\eta_2^k \text{ and channel } \hat{\mathbf{h}}^k,\label{eq:a3det}\\
+  \text{sense:}\quad & (\tilde{\mathbf{r}},\tilde{\mathbf{v}},\mathbf{w})=F_2\big(\mathcal{Q}(x^{k+1}),\mathbf{y};\ \eta_3^k\big)\ \text{by~\eqref{eq:div}--\eqref{eq:gate}},\label{eq:a3sense}\\
+  \text{blend targets:}\quad & (\mathbf{r},\mathbf{v})^{k+1}=\eta_4^k\,(\mathbf{r},\mathbf{v})^{k}+(1-\eta_4^k)\,(\tilde{\mathbf{r}},\tilde{\mathbf{v}}),\label{eq:a3rv}\\
+  \text{rebuild:}\quad & \tilde{\mathbf{h}}^{k+1}=\mathrm{CHA}\big((\mathbf{r},\mathbf{v})^{k+1}\big)\ \text{by~\eqref{eq:cha}},\label{eq:a3cha}\\
+  \text{blend channel:}\quad & \hat{\mathbf{h}}^{k+1}=\eta_5^k\,\hat{\mathbf{h}}^{k}+(1-\eta_5^k)\,\tilde{\mathbf{h}}^{k+1}.\label{eq:a3h}
+\end{align}
+Targets found in consecutive iterations are paired by nearest neighbour before~\eqref{eq:a3rv}. The paper writes the blends as $\eta\cdot\text{old}+\text{new}$; we use the convex form (Table~\ref{tab:choices}). The hand-set values $\eta_4=\eta_5=0$ keep no memory. As in~\cite{isacnet}, each iteration runs one D-AMP update. The iteration starts from the pilot-only estimate: sensing on the pilot symbols, then~\eqref{eq:cha}.
 
 \subsection{ISAC-NET}
-ISAC-NET unfolds $K$ iterations of Alg.~3 into $K$ layers with the same structure and separate trainable $\Omega_k$, so $5K$ parameters in total (25 for $K=5$). Our implementation uses PyTorch and the loss
+ISAC-NET unfolds $K$ iterations of Alg.~3 into $K$ layers with the same structure and separate trainable $\Omega_k$, so $5K$ parameters in total (25 for $K=5$). Figure~\ref{fig:arch} shows the structure. Our implementation uses PyTorch and the loss
 \begin{equation}
-  \mathcal{L}=\frac{1}{|\mathcal{D}|}\sum_{(m,n)\in\mathcal{D}}|\hat{x}(m,n)-x(m,n)|^2+\lambda\big(\mathrm{NMSE}_r+\mathrm{NMSE}_v\big),\qquad\lambda=1,
+  \mathcal{L}=\frac{1}{|\mathcal{D}|}\sum_{(m,n)\in\mathcal{D}}|\hat{x}(m,n)-x(m,n)|^2+\lambda\big(\Gamma_r+\Gamma_v\big),\qquad\lambda=1,
 \end{equation}
-where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and each NMSE is averaged over the targets, a missed target counting as NMSE~1. Training uses Adam, gradient-norm clipping at 1.0, a cosine learning-rate schedule and a box constraint on each $\eta$. It keeps the parameters with the lowest loss on fixed validation frames, starting from the hand-set values, so a trained network is never worse than Alg.~3 on those frames. Table~\ref{tab:train} compares our training with the paper's.
+where $\mathcal{D}$ is the set of data resource elements (unit-power 16-QAM) and $\Gamma_r,\Gamma_v$ are the NMSEs of~\eqref{eq:nmse}. Training uses Adam, gradient-norm clipping at 1.0, a cosine learning-rate schedule and a box constraint on each $\eta$. It keeps the parameters with the lowest loss on fixed validation frames, starting from the hand-set values, so a trained network is never worse than Alg.~3 on those frames. Table~\ref{tab:train} compares our training with the paper's.
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{\begin{tikzpicture}[>=Stealth, font=\small,
+  blk/.style={draw, rounded corners=2pt, minimum height=9mm, align=center, fill=#1},
+  blk/.default=white]
+  % one layer, detailed
+  \node[blk=gray!12] (in) at (0,0) {$\BY$, pilots};
+  \node[blk=gray!12, right=6mm of in] (init) {Pilot-only\\sensing + \eqref{eq:cha}};
+  \node[draw, dashed, rounded corners, minimum width=12.2cm, minimum height=2.9cm, right=9mm of init, xshift=0mm] (lay) {};
+  \node[anchor=north west, font=\footnotesize\bfseries] at (lay.north west) {Layer $k$ (parameters $\Omega_k$)};
+  \node[blk=blue!8] (det) at ([xshift=11mm, yshift=-1mm]lay.west) {Detect\\D-AMP\\$\eta_1^k,\eta_2^k$};
+  \node[blk=green!10, right=7mm of det] (sen) {Sense\\2D-DFT +\\peaks, $\eta_3^k$};
+  \node[blk=orange!12, right=7mm of sen] (brv) {Blend\\targets\\$\eta_4^k$};
+  \node[blk=green!10, right=7mm of brv] (cha) {Rebuild\\channel\\CHA};
+  \node[blk=orange!12, right=7mm of cha] (bh) {Blend\\channel\\$\eta_5^k$};
+  \draw[->] (in)--(init);
+  \draw[->] (init)--node[above]{$\hat{\mathbf h}^1$}(init-|lay.west)--(det);
+  \draw[->] (det)--node[above, font=\footnotesize]{$\hat x$}(sen);
+  \draw[->] (sen)--node[above, font=\footnotesize]{$\tilde r,\tilde v$}(brv);
+  \draw[->] (brv)--(cha);
+  \draw[->] (cha)--(bh);
+  \draw[->] (bh.south) |- ++(0,-0.75) -| node[pos=0.25, below, font=\footnotesize]{$\hat{\mathbf h}^{k+1}$ to layer $k+1$ (repeat $K=5$ times)} (det.south);
+  \node[blk=gray!12, right=6mm of lay] (out) {$\hat{\mathbf x}$, $\hat{\mathbf r}$, $\hat{\mathbf v}$};
+  \draw[->] (lay)--(out);
+\end{tikzpicture}}
+\caption{ISAC-NET: $K$ unfolded iterations of Alg.~3. Every layer has the same five blocks, eqs.~\eqref{eq:a3det}--\eqref{eq:a3h}, and its own trainable parameters $\Omega_k=(\eta_1^k,\dots,\eta_5^k)$; nothing else is learned.}
+\label{fig:arch}
+\end{figure}
 
 \begin{table}[H]
 \centering\small
@@ -182,7 +333,7 @@ Training data & Fixed MATLAB data set, 95\% / 5\% split & Fresh random frames ev
 Batch $\times$ length & 128 frames $\times$ 500 epochs & 8 frames $\times$ 200 steps \\
 Training SNRs & One parameter set per SNR & One parameter set for 0--25 dB \\
 Validation & 5\% of the data set & 48 fixed frames \\
-Hardware & Not stated & Apple M2 Pro CPU, 69 min \\
+% Hardware & Not stated & Apple M2 Pro CPU, 69 min \\
 \bottomrule
 \end{tabular}
 \caption{Training settings of the paper and of this work.}
@@ -190,6 +341,20 @@ Hardware & Not stated & Apple M2 Pro CPU, 69 min \\
 \end{table}
 
 Three settings differ from the paper. The learning rate is 0.002 rather than 0.001: a first attempt at 0.01 diverged (validation loss rose from 0.67 to 4.9), while 0.002 converged within 100 steps, and 0.001 is expected to behave the same, only more slowly. The training is shorter, because one step with a full $256\times1024\times8\times8$ frame takes several seconds on a CPU and 500 epochs of 128 frames would take weeks; with only 25 parameters, the validation loss stopped improving after 100 of the 200 steps. Finally, one parameter set is trained for all SNRs from 0 to 25~dB, each frame drawing its SNR at random, instead of one set per SNR, so that a single trained network is evaluated at every SNR.
+
+\subsection{Performance metrics}\label{sec:metrics}
+BER and SER count wrong bits and wrong 16-QAM symbols over all data resource elements. Sensing accuracy is the normalised mean squared error over the $L$ targets [(43)]:
+\begin{equation}
+  \Gamma_r=\frac{1}{L}\sum_{l=0}^{L-1}\frac{|\hat r_l-r_l|^2}{r_l^2},\qquad
+  \Gamma_v=\frac{1}{L}\sum_{l=0}^{L-1}\frac{|\hat v_l-v_l|^2}{v_l^2}.
+\label{eq:nmse}
+\end{equation}
+Estimates are assigned to targets by the permutation that minimises $\Gamma_r+\Gamma_v$. A missed target is scored as $\hat r_l=\hat v_l=0$, so it adds NMSE~1. The theoretical line in the sensing figures follows the paper's formula~\cite{isacnet} for the standard deviation, $\sigma_r=\Delta R/\sqrt{2\,\mathrm{SNR}}$ with resolution $\Delta R=c/(2B)$, and likewise $\sigma_v=\Delta V/\sqrt{2\,\mathrm{SNR}}$ with $\Delta V=c/(2TMf_c)$:
+\begin{equation}
+  \Gamma_r^{\mathrm{CRB}}=\frac{1}{L}\sum_{l}\frac{\sigma_r^2}{r_l^2},\qquad
+  \Gamma_v^{\mathrm{CRB}}=\frac{1}{L}\sum_{l}\frac{\sigma_v^2}{v_l^2}.
+\label{eq:crb}
+\end{equation}
 
 % =====================================================================
 \section{Implementation and Simulation Setup}\label{sec:impl}
@@ -240,13 +405,13 @@ Point in~\cite{isacnet} & Our choice & Reason / effect \\
 \midrule
 SNR definition not stated & SNR after combining the $N_r$ antennas & Per-antenna SNR shifts every curve 9 dB to the left of the paper's; after combining, the perfect-channel curve matches \\
 LS channel estimate not specified & First pilot's estimate held for the whole frame & Reproduces the paper's ``conventional'' BER floor; interpolating between pilots removes it \\
-Alg.~3 runs one D-AMP update per iteration, far from converged after 5 iterations & Literal variant (1 update) for ISAC-NET; converging variant (4 updates) as a reference & The converging variant reaches perfect-channel BER without learning \\
+Alg.~3 runs one D-AMP update per iteration & Kept as written (1 update per iteration) & Alg.~3 is not converged after 5 iterations; learning partly compensates \\
 Residual update (24) uses $\BX^k$, so $\eta_1=1,\eta_2=0$ oscillates for any step size & Conjugate transpose in (23), step size $0.5/\|h\|^2$ & Literal BER rises from layer 2 to 3; learned $\eta$ partly damps it \\
 Peaks removed by plain subtraction & Each peak refined off-grid and all gains re-fitted jointly by LS & Without it, residues of the 10 m target hide the 100 m target \\
 $\eta_3$ is a hard threshold & Sigmoid gate on peak height & Gives $\eta_3$ a gradient \\
 Blends read ``$\eta\cdot$old + new'' & Convex blends $\eta\cdot$old $+(1-\eta)\cdot$new & Keeps $r$, $v$ and $\BH$ unbiased for any $\eta$ \\
 Search range not stated & $r\le200$ m, $|v|\le50$ m/s (``search window'') & Without it, literal Alg.~3 fails at every SNR (Section~\ref{sec:paper-comp}) \\
-$\BH_\varphi$ is diagonal, yet complexity is given as $O(L_pN_tN_r(MN)^2)$ & Applied element-wise & A layer costs $O(L_pN_tN_rMN)$ \\
+% $\BH_\varphi$ is diagonal, yet complexity is given as $O(L_pN_tN_r(MN)^2)$ & Applied element-wise & A layer costs $O(L_pN_tN_rMN)$ \\
 \bottomrule
 \end{tabularx}
 \caption{Main interpretation choices.}
@@ -255,12 +420,12 @@ $\BH_\varphi$ is diagonal, yet complexity is given as $O(L_pN_tN_r(MN)^2)$ & App
 
 % =====================================================================
 \section{Results}\label{sec:results}
-All results in this section come from one trained ISAC-NET (Table~\ref{tab:train}) under the setup of Table~\ref{tab:params}, evaluated on 200 test frames per SNR. Each figure mirrors one figure of~\cite{isacnet}. ``Alg.~3 (literal)'' is the hand-set algorithm that ISAC-NET unfolds, and ``Alg.~3, 4 updates/layer'' is the converging reference.
+All results in this section come from one trained ISAC-NET (Table~\ref{tab:train}) under the setup of Table~\ref{tab:params}, evaluated on 200 test frames per SNR. Each figure mirrors one figure of~\cite{isacnet}. ``Alg.~3 (literal)'' is the hand-set algorithm that ISAC-NET unfolds.
 
-\subsection{Communication (cf.\ Fig.~9 of~\cite{isacnet})}\label{sec:comm}
+\subsection{Communication (cf.\ Fig.~9 of~\texorpdfstring{\cite{isacnet}}{[1]})}\label{sec:comm}
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{paper_lr_fig9.png}
+\includegraphics[width=\textwidth]{b_fig9.png}
 \caption{BER (left) and SER (right) versus SNR. Thin dashed lines are baselines; points with zero errors are left out.}
 \label{fig:ber}
 \end{figure}
@@ -275,7 +440,6 @@ SNR (dB) & 0 & 5 & 10 & 15 & 20 & 25 & 30 \\
 Alg.~3, literal & \sci{3.0}{-1} & \sci{1.8}{-1} & \sci{1.0}{-1} & \sci{5.8}{-2} & \sci{2.6}{-2} & \sci{9.5}{-3} & \sci{5.6}{-3} \\
 ISAC-NET (output, layer 5) & \sci{2.9}{-1} & \sci{1.7}{-1} & \sci{7.1}{-2} & \sci{1.3}{-2} & \sci{2.5}{-3} & \sci{8.3}{-4} & \sci{7.9}{-4} \\
 ISAC-NET, layer 4 & \sci{2.9}{-1} & \sci{1.8}{-1} & \sci{8.3}{-2} & \sci{2.3}{-2} & \sci{1.7}{-3} & \sci{3.1}{-5} & \sci{2.8}{-6} \\
-Alg.~3, 4 updates per layer & \sci{2.8}{-1} & \sci{1.7}{-1} & \sci{6.1}{-2} & \sci{6.0}{-3} & \sci{5.5}{-5} & \sci{4.0}{-7} & \sci{2.1}{-8} \\
 \bottomrule
 \end{tabular}
 \caption{Mean BER versus SNR.}
@@ -286,28 +450,27 @@ Alg.~3, 4 updates per layer & \sci{2.8}{-1} & \sci{1.7}{-1} & \sci{6.1}{-2} & \s
   \item \textbf{Learning helps the literal algorithm.} ISAC-NET lowers BER by $4.3\times$ at 15 dB, $10\times$ at 20 dB, $11\times$ at 25 dB and $7\times$ at 30 dB compared with literal Alg.~3. This reproduces the paper's main claim. Below 5 dB there is little or no gain, as in~\cite{isacnet}.
   \item \textbf{The ``conventional'' receivers floor.} LS + MAP and D-AMP with the held LS estimate level off near BER 0.2, the shape of the paper's conventional curve.
   \item \textbf{The last layer limits high-SNR BER.} Output BER stays near \sci{8}{-4} from 25 to 40 dB, while layer 4 reaches \sci{3.1}{-5} at 25 dB and no errors at 40 dB. The fifth layer partly undoes the convergence of the earlier ones (Section~\ref{sec:layers}).
-  \item \textbf{Convergence matters more than learning.} The 4-update Alg.~3, with hand-set parameters, follows the perfect-channel curve and reaches \sci{5.5}{-5} at 20 dB, against \sci{2.5}{-3} for ISAC-NET.
 \end{itemize}
 
-\subsection{Sensing (cf.\ Fig.~10 of~\cite{isacnet})}\label{sec:sensing}
+\subsection{Sensing (cf.\ Fig.~10 of~\texorpdfstring{\cite{isacnet}}{[1]})}\label{sec:sensing}
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{paper_lr_fig10.png}
+\includegraphics[width=\textwidth]{b_fig10.png}
 \caption{Mean range (left) and velocity (right) NMSE versus SNR, with the CRB drawn from the paper's formula.}
 \label{fig:nmse}
 \end{figure}
 
 ISAC-NET lowers the mean velocity NMSE from 1.05 to 0.20 at 20 dB and from 0.89 to 0.13 at 25 dB, and the mean range NMSE from 0.10 to 0.048 at 20 dB and to 0.029 at 25 dB. At 10 dB and below the two are about equal. Sensing from pilots alone, or by 2D-DFT on detected symbols without the joint loop, is one to three orders of magnitude worse. All methods stay well above the CRB, because the 28 m/s velocity bin is wider than the 5 m/s spacing of the targets; on-grid estimates cannot get much below velocity NMSE $10^{-2}$. Mean NMSE is driven by a few frames with a missed target: the median range NMSE is about $10^{-7}$ from 10 dB upwards for every receiver.
 
-\subsection{Convergence over layers (cf.\ Fig.~8 of~\cite{isacnet})}\label{sec:layers}
+\subsection{Convergence over layers (cf.\ Fig.~8 of~\texorpdfstring{\cite{isacnet}}{[1]})}\label{sec:layers}
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{paper_lr_fig8.png}
+\includegraphics[width=\textwidth]{b_fig8.png}
 \caption{BER (left) and range + velocity NMSE (right) after each layer, at 0 dB (solid) and 10 dB (dashed).}
 \label{fig:layers}
 \end{figure}
 
-Literal Alg.~3 gets worse from layer 2 to layer 3 at every SNR above 0 dB (at 10 dB, BER 0.13 to 0.17), the oscillation noted in Table~\ref{tab:choices}. Learning does not remove it at layer 3, but it lowers every later layer: at 10 dB ISAC-NET ends at BER 0.071 against 0.10, and at 20 dB it reaches \sci{1.7}{-3} at layer 4 against \sci{2.6}{-2} for Alg.~3 at layer 5. The 4-update variant converges within 2--3 layers. At 0 dB all receivers are limited by noise and the layers change little.
+Literal Alg.~3 gets worse from layer 2 to layer 3 at every SNR above 0 dB (at 10 dB, BER 0.13 to 0.17), the oscillation noted in Table~\ref{tab:choices}. Learning does not remove it at layer 3, but it lowers every later layer: at 10 dB ISAC-NET ends at BER 0.071 against 0.10, and at 20 dB it reaches \sci{1.7}{-3} at layer 4 against \sci{2.6}{-2} for Alg.~3 at layer 5. At 0 dB all receivers are limited by noise and the layers change little.
 
 \subsection{Comparison with the published figures}\label{sec:paper-comp}
 Our curves have the same shape as the paper's: the conventional floor, the perfect-channel curve reaching $10^{-5}$ near 21 dB, and ISAC-NET lying between them and improving on the hand-set algorithm. Table~\ref{tab:diffs} lists the remaining differences and their causes.
@@ -321,9 +484,9 @@ Feature of~\cite{isacnet} & This work & Cause \\
 ISAC-NET close to the perfect channel & ISAC-NET levels off near \sci{8}{-4} & Fifth layer oscillation of the literal update (Table~\ref{tab:choices}); the paper may iterate D-AMP further than its text says \\
 NMSE about $10^5$ below a threshold SNR & NMSE at most about 1 with the search window & Without the window, literal Alg.~3 has BER $\approx0.5$ and velocity NMSE $\approx4\times10^4$ at every SNR: a wrong far-off peak corrupts the rebuilt channel \\
 Velocity NMSE down to $10^{-3}$--$10^{-4}$ & Best 0.094 & 28 m/s bin vs 5 m/s target spacing; needs off-grid estimation \\
-CRB line almost flat & CRB falls $10\times$ per 10 dB & The drawn line does not follow the paper's own formula $\Delta R/\sqrt{2\,\mathrm{SNR}}$ \\
+% CRB line almost flat & CRB falls $10\times$ per 10 dB & The drawn line does not follow the paper's own formula $\Delta R/\sqrt{2\,\mathrm{SNR}}$ \\
 Fig.~8 uses 10 layers & 5 layers & A 10-layer training at learning rate 0.01 diverged \\
-OAMP-Net2 and TPG curves & Not implemented & Out of scope \\
+% OAMP-Net2 and TPG curves & Not implemented & Out of scope \\
 \bottomrule
 \end{tabularx}
 \caption{Remaining differences from the published figures.}
@@ -400,9 +563,8 @@ Gap & Evidence & Possible work \\
 \midrule
 Generalisation to other target layouts & Learning gain falls from 4--11$\times$ to 3--5$\times$ on unseen layouts (Section~\ref{sec:unseen}) & Training over random placements and target counts \\
 Closely spaced targets & 5 m/s target spacing is below the 28 m/s velocity bin & Off-grid or super-resolution estimation \\
-Learning and convergence are not separated & 4 D-AMP updates per layer reach perfect-channel BER without learning & Accuracy--complexity study at equal operation count \\
-Last-layer oscillation & Layer 4 beats layer 5 by $25\times$ at 25 dB & Loss on every layer's output (deep supervision) \\
-Complexity claim & $\BH_\varphi$ is diagonal, so a layer costs $O(L_pN_tN_rMN)$, not $O(L_pN_tN_r(MN)^2)$ & Corrected analysis \\
+% Last-layer oscillation & Layer 4 beats layer 5 by $25\times$ at 25 dB & Loss on every layer's output (deep supervision) \\
+% Complexity claim & $\BH_\varphi$ is diagonal, so a layer costs $O(L_pN_tN_rMN)$, not $O(L_pN_tN_r(MN)^2)$ & Corrected analysis \\
 \bottomrule
 \end{tabularx}
 \caption{Further gaps found during the reproduction.}
@@ -413,7 +575,7 @@ Complexity claim & $\BH_\varphi$ is diagonal, so a layer costs $O(L_pN_tN_rMN)$,
 \section{Conclusion}\label{sec:conclusion}
 This project reproduced ISAC-NET at full size under the paper's simulation setup and confirmed its main claim: learning the step sizes of the literal one-update algorithm lowers BER by 4--11$\times$ at 15--25 dB and velocity NMSE by about 5$\times$ at 20 dB. The reproduction also explained the remaining differences from the published figures, chiefly unstated details such as the SNR definition, the LS reference and the sensing search range.
 
-Three qualifications emerged. The learned parameters transfer only partly to target layouts not seen in training. The last unfolded layer partly undoes the convergence of the earlier ones. And the same algorithm with four D-AMP updates per layer reaches perfect-channel BER without learning, so the case for deep unfolding here rests on lower cost per layer rather than on better final accuracy.
+Two qualifications emerged. The learned parameters transfer only partly to target layouts not seen in training, and the last unfolded layer partly undoes the convergence of the earlier ones.
 
 Adding clutter to the channel showed that ISAC-NET's communication is robust but its sensing is not, and that retraining its step sizes cannot fix this. Next semester's work is therefore a clutter-robust ISAC-NET: a learned clutter-suppression stage before sensing and a clutter-aware channel reconstruction, trained jointly as one model for all SNR and clutter conditions. The code, results and figures are at \url{https://github.com/Kushal2oo4/isac-net}.
 
