@@ -156,13 +156,13 @@ Because the same symbol is sent from every transmit antenna, only the sum of eac
 \end{equation}
 $\phi_l$ carries the delay $\tau_l=r_l/c$ across subcarriers and the Doppler shift $f_{d,l}=v_lf_c/c$ across symbols [(14)--(17)].
 
-\subsection{Pilot processing and MAP detection}
+\subsection{Pilot-based channel estimation and MAP detection of data}
 On the pilot symbols $m\in\mathcal{P}$ the transmitted QPSK symbols are known, and the LS estimate is
 \begin{equation}
   \hat{\mathbf{h}}(m,n)=\frac{\mathbf{y}(m,n)}{x(m,n)},\qquad m\in\mathcal{P}.
 \label{eq:ls}
 \end{equation}
-The ``conventional'' receiver holds the estimate of the first pilot symbol for the whole frame, $\hat{\mathbf{h}}(m,n)=\hat{\mathbf{h}}(m_1,n)$. Given any channel estimate, each data symbol is detected by MAP, which for a scalar symbol and an $N_r$-vector channel is maximum-ratio combining followed by the nearest 16-QAM point:
+The ``conventional'' receiver holds the estimate of the first pilot symbol (LS + MAP) holds the estimate of the first pilot symbol for the whole frame, $\hat{\mathbf{h}}(m,n)=\hat{\mathbf{h}}(m_1,n)$, and uses it to detect each \emph{data} symbol by MAP. For a scalar symbol and an $N_r$-vector channel, MAP is maximum-ratio combining followed by the nearest 16-QAM point:
 \begin{equation}
   \hat{x}(m,n)=\arg\min_{s\in\mathcal{S}}\big\|\mathbf{y}(m,n)-\hat{\mathbf{h}}(m,n)\,s\big\|^2
   =\mathcal{Q}\!\left(\frac{\hat{\mathbf{h}}^H(m,n)\,\mathbf{y}(m,n)}{\|\hat{\mathbf{h}}(m,n)\|^2}\right),
